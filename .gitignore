@@ -1,0 +1,183 @@
+# ============================================
+# .gitignore para interpretability_I
+# Proyecto: German Credit - Interpretabilidad
+# ============================================
+
+# ============================================
+# ENTORNOS VIRTUALES
+# ============================================
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+*.venv
+
+# ============================================
+# PYTHON
+# ============================================
+# Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# ============================================
+# JUPYTER NOTEBOOK
+# ============================================
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+*.ipynb_checkpoints
+
+# Jupyter Notebook config
+.jupyter/
+
+# ============================================
+# DATOS (Opcional - descomentar si no quieres subir datos)
+# ============================================
+# Descomentar estas líneas si tus datos son muy grandes
+# o contienen información sensible
+
+# data/*.csv
+# data/*.data
+# data/*.txt
+# data/raw/*
+# data/processed/*
+
+# Mantener la estructura de carpetas
+!data/.gitkeep
+
+# ============================================
+# MODELOS ENTRENADOS
+# ============================================
+# Modelos pueden ser grandes, no subirlos a Git
+models/*.pkl
+models/*.joblib
+models/*.h5
+models/*.pt
+models/*.pth
+models/*.ckpt
+
+# Mantener la carpeta
+!models/.gitkeep
+
+# ============================================
+# VISUALIZACIONES GENERADAS
+# ============================================
+# Descomentar si generas muchas imágenes temporales
+# figures/*.png
+# figures/*.jpg
+# figures/*.pdf
+
+# ============================================
+# LOGS
+# ============================================
+*.log
+logs/
+*.out
+
+# ============================================
+# IDE / EDITORES
+# ============================================
+# VSCode
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Spyder
+.spyderproject
+.spyproject
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# ============================================
+# SISTEMA OPERATIVO
+# ============================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# ============================================
+# OTROS
+# ============================================
+# Archivos temporales
+*.tmp
+*.temp
+*.bak
+*.swp
+
+# Archivos de configuración local
+.env
+.env.local
+config.local.py
+
+# Archivos comprimidos
+*.zip
+*.tar.gz
+*.rar
+
+# Documentos temporales
+*.aux
+*.out
+*.toc
