@@ -6,9 +6,10 @@ Entender interpretabilidad en Machine Learning mediante análisis de riesgo cred
 ## 📊 Dataset
 - **Nombre:** German Credit Data
 - **Tipo:** Clasificación binaria
-- **Target:** Risk (Good/Bad)
-- **Registros:** ~1000 clientes
-- **Features:** ~20 variables (demográficas y financieras)
+- **Target:** risk (0=Good, 1=Bad)
+- **Registros:** 1000 clientes
+- **Features:** 20 variables (7 numéricas, 13 categóricas)
+- **Desbalanceo:** 70/30 (ratio 2.33:1)
 
 ## 🛠️ Stack Tecnológico
 - Python 3.8+
@@ -20,12 +21,20 @@ Entender interpretabilidad en Machine Learning mediante análisis de riesgo cred
 ## 📂 Estructura
 - `data/` - Datasets
 - `notebooks/` - Análisis exploratorio y experimentación
+  - ✅ 01_exploracion.ipynb - EDA completado
+  - 🔄 02_modelado.ipynb - Training (en progreso)
 - `models/` - Modelos entrenados
+- `src/` - Código modular
 - `app.py` - Dashboard interactivo
 
+## 📈 Progreso
+- [x] Fase 1: Exploración de datos
+- [ ] Fase 2: Modelado XGBoost
+- [ ] Fase 3: Interpretabilidad SHAP
+- [ ] Fase 4: Dashboard
+
 ## 🚀 Próximos Pasos
-1. ✅ Setup inicial
-2. 🔄 Exploración de datos (en progreso)
-3. ⏳ Entrenamiento modelo
-4. ⏳ Implementación SHAP
-5. ⏳ Dashboard Streamlit
+1. ✅ Exploración completada
+2. 🔄 Entrenamiento modelo XGBoost
+3. ⏳ Implementación SHAP
+4. ⏳ Dashboard Streamlit
