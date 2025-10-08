@@ -22,14 +22,14 @@ Entender interpretabilidad en Machine Learning mediante análisis de riesgo cred
 - `data/` - Datasets
 - `notebooks/` - Análisis exploratorio y experimentación
   - ✅ 01_exploracion.ipynb - EDA completado
-  - 🔄 02_modelado.ipynb - Training (en progreso)
+  - ✅ 02_modelado.ipynb - Training
 - `models/` - Modelos entrenados
 - `src/` - Código modular
 - `app.py` - Dashboard interactivo
 
 ## 📈 Progreso
 - [x] Fase 1: Exploración de datos
-- [ ] Fase 2: Modelado XGBoost
+- [x] Fase 2: Modelado XGBoost
 - [ ] Fase 3: Interpretabilidad SHAP
 - [ ] Fase 4: Dashboard
 
