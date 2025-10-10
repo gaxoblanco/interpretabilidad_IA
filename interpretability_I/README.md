@@ -1,4 +1,7 @@
 # Interpretability I - German Credit Data
+- Para levantar el Dashboard: `streamlit run app.py`
+- Autor: [@gaxoblanco]
+- Fecha: 2025-10-10
 
 ## 🎯 Objetivo
 Entender interpretabilidad en Machine Learning mediante análisis de riesgo crediticio.
@@ -26,17 +29,16 @@ Entender interpretabilidad en Machine Learning mediante análisis de riesgo cred
   - ✅ 03_shap_analysis.ipynb - completado
   - ✅ 04_counterfactual_explanations.ipynb
 - `models/` - Modelos entrenados
-- `src/` - Código modular
-- `app.py` - Dashboard interactivo
+- `app.py` - Dashboard interactivo simple con Streamlit
 
 ## 📈 Progreso
 - [x] Fase 1: Exploración de datos
 - [x] Fase 2: Modelado XGBoost
 - [x] Fase 3: Interpretabilidad SHAP
-- [ ] Fase 4: Dashboard
+- [x] Fase 4: Dashboard
 
 ## 🚀 Próximos Pasos
 1. ✅ Exploración completada
-2. 🔄 Entrenamiento modelo XGBoost
-3. ⏳ Implementación SHAP
-4. ⏳ Dashboard Streamlit
+2. ✅ Entrenamiento modelo XGBoost
+3. ✅ Implementación SHAP
+4. ✅ Dashboard Streamlit
