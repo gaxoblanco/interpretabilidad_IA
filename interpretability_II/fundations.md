@@ -133,21 +133,29 @@ PREDICTION
 
 Ejemplo: `"This movie is absolutely fantastic"`
 ¿Qué perturbaciones crearía LIME?
+- `"This movie is absolutely [MASK]"`
+- Para generar la perturbación, LIME enmascara palabras al azar en la oración original.
 
 **3.2** ¿Por qué LIME usa un modelo lineal local si DistilBERT es súper complejo?
+- Porque LIME asume que cerca del punto de interés (la oración original), el comportamiento del modelo puede aproximarse linealmente. Esto simplifica la interpretación y permite entender qué palabras son más importantes para esa predicción específica.
 
 **3.3** ¿Cuántas perturbaciones genera LIME típicamente para una explicación? ¿Más es mejor?
-
+- Usualmente entre 500 y 1000 perturbaciones. Más perturbaciones pueden mejorar la estabilidad de la explicación, pero también aumentan el tiempo de cómputo. Hay un punto de rendimientos decrecientes donde agregar más perturbaciones no mejora significativamente la explicación.
+- Opciones: Feature Subtitution, Random Deletion, Synonym Replacement.
 ---
 
 ### Configuración para Transformers
 
 **3.4** ¿Qué es el parámetro `num_features` en LIME? ¿Cuánto usaremos (5, 10, 20)?
+- `num_features` define cuántas palabras (features) se incluirán en la explicación final. Usaremos 10 para equilibrar detalle y claridad, ya que demasiadas pueden hacer la explicación confusa.
 
 **3.5** ¿LIME da siempre las mismas explicaciones para el mismo input? ¿Por qué sí o no?
+- No, LIME puede dar explicaciones ligeramente diferentes en cada ejecución debido a la naturaleza aleatoria de las perturbaciones que genera. Sin embargo, con un número suficiente de perturbaciones, las explicaciones tienden a ser consistentes.
+- Se analiza la estabilidad de las explicaciones ejecutando LIME varias veces y comparando los resultados.
 
 **3.6** ¿Qué diferencia hay entre aplicar LIME a un texto corto (1 línea) vs largo (párrafo)?
-
+- En textos cortos, cada palabra tiene un impacto más significativo en la predicción, por lo que las explicaciones pueden ser más claras y directas. En textos largos, la importancia de cada palabra puede diluirse, y LIME puede identificar más palabras como relevantes, lo que puede complicar la interpretación.
+- Ejemplo, una palabra que se repite en un párrafo largo puede tener una importancia acumulada mayor que en una oración corta, y no ncesariamente debería ser la más relevante para la predicción.
 ---
 
 ## ⚖️ BLOQUE 4: SHAP vs LIME en NLP
@@ -158,8 +166,18 @@ Ejemplo: `"This movie is absolutely fantastic"`
 | Aspecto | SHAP (Transformers) | LIME (Texto) |
 |---------|---------------------|--------------|
 | Velocidad típica | ? segundos | ? segundos |
-| ¿Estable? | Sí/No | Sí/No |
-| Mejor para... | ? | ? |
+| Aspecto | SHAP (Transformers) | LIME (Texto) |
+|---------|---------------------|--------------|
+| **Base teórica** | Teoría de juegos (Shapley values) | Aproximación lineal local |
+| **Scope** | Global + Local | Solo Local |
+| **Perturbación** | Masking `[MASK]` | Removal (eliminar palabras) |
+| **Num. perturbaciones** | Todas las coaliciones (aprox.) | 5,000 - 10,000 muestras |
+| **Velocidad** | 30-60 seg/texto | 45-90 seg/texto (5k samples) |
+| **Estabilidad** | ✅ Alta (determinístico) | 🟡 Media (estocástico) |
+| **Garantías matemáticas** | ✅ Sí (propiedades formales) | ❌ No |
+| **Out-of-distribution** | 🟡 Moderado (BERT conoce [MASK]) | ❌ Alto (oraciones incompletas) |
+| **Mejor para** | Importancia global + análisis riguroso | Explicación rápida individual |
+| **Limitación** | Muy lento | Inestable, sin garantías |
 
 **4.2** Si SHAP dice "excelente" es importante (+0.5) pero LIME dice "fantastic" (+0.8), ¿cómo interpretas eso?
 
