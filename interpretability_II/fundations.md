@@ -41,9 +41,28 @@ PREDICTION
                                                       Positivo Negativo
 
 **1.4** ¿Qué es el token `[CLS]` y por qué lo usamos para clasificación?
+- Seria el puntero para marcar el inicio de la oracion, y es el que se usa para clasificacion porque contiene informacion de toda la oracion. Utiliza por dentro self-attention para "mirar" todas las palabras y resumir su significado en un solo vector.
+
+**1.41** ¿Qué es el token `[SEP]` y por qué lo usamos?
+- Se usa para marcar el final de una oracion o separar inputs en tareas de pares de oraciones (ej. pregunta-respuesta). y asi facilitar que el modelo entienda los limites del texto.
 
 **1.5** ¿Qué son **positional embeddings**? ¿Por qué los Transformers los necesitan?
+- Como trabajamos en paralelo, necesitamos contar con la posicion de cada palabra en la oracion. Los positional embeddings son vectores que se suman a los word embeddings para darle al modelo informacion sobre el orden de las palabras.
+   # Pseudocódigo simplificado
+   tokens = ["[CLS]", "This", "movie", "is", "great", "[SEP]"]
 
+   # Token IDs
+   token_ids = [101, 2023, 3185, 2003, 2307, 102]
+
+   # Token embeddings (768 dims cada uno)
+   token_embeds = embedding_layer(token_ids)  # Shape: [6, 768]
+
+   # Positional embeddings (una por posición)
+   positions = [0, 1, 2, 3, 4, 5]
+   pos_embeds = position_embedding_layer(positions)  # Shape: [6, 768]
+
+   # Sumar ambos
+   final_embeds = token_embeds + pos_embeds  # Shape: [6, 768]
 ---
 
 ### BERT vs DistilBERT
@@ -59,6 +78,8 @@ PREDICTION
 ### Fine-tuning (Específico para Clasificación)
 
 **1.9** ¿Qué significa hacer **fine-tuning** de un modelo pre-entrenado?
+- Pre-entrenamiento: Aprende lenguaje (semanas, millones de textos)
+- Fine-tuning: Aprende tu tarea específica (horas, miles de ejemplos)
 
 **1.10** ¿Qué capa se agrega encima de DistilBERT para hacer clasificación de sentimientos?
 
@@ -71,22 +92,36 @@ PREDICTION
 ### Diferencias con SHAP Tabular
 
 **2.1** En Módulo I usamos SHAP con XGBoost (datos tabulares). ¿Qué cambia al aplicarlo a texto?
-
+- En texto, las "features" son palabras o tokens, no columnas numéricas. Al tener N° variables (palabras), el espacio de combinaciones es mucho mayor. Usamos token masking en vez de valores nulos. Y el modelo es un Transformer, no un árbol. Por esto ultimo usamos SHAP Explainer genérico, no TreeExplainer.
 **2.2** Para un modelo de texto, ¿las "features" son palabras, tokens o algo más?
+- Son tokens, que pueden ser palabras completas o sub-palabras (subwords) dependiendo del tokenizador usado. Por ejemplo, "fantástico" puede dividirse en "fan", "tás" y "tico".
 
 **2.3** ¿Cómo "enmascara" SHAP palabras en una oración para calcular importancia?
+- Reemplaza palabras con un token especial (ej. `[MASK]`) o las elimina, y observa cómo cambia la predicción del modelo. Esto ayuda a medir la contribución de cada palabra.
 
 **2.4** ¿Qué estrategia de masking se usa con Transformers? (¿tokens en blanco, [MASK], eliminación?)
+- Se usa el token `[MASK]` para reemplazar palabras, ya que los Transformers están entrenados para manejar este token y pueden inferir el contexto faltante.
+
+**2.4.1** ¿Que tipos de Tokenizers existen y cuál usaremos? (word-level, subword, byte-level)
+- Word-level: Cada palabra es una feature. Problemas con OOV y vocab grande.
+- Subword: Divide palabras en partes (WordPiece, BPE). Balance entre vocab y OOV. Usaremos WordPiece.
+- Byte-level: Cada byte es una feature. Resuelve OOV y multilingüismo, pero es lento y complejo.
+- subword (WordPiece) es la mejor opción para nuestro proyecto.
+
+- El tema de tokenización es crucial para NLP. Cuanto mas se optimice este paso, mejores resultados se obtendrán en las tareas posteriores a la hora de interpretar los modelos.
 
 ---
 
 ### SHAP con Transformers
 
 **2.5** ¿Usaremos `TreeExplainer` (como en Módulo I) o `Explainer` genérico? ¿Por qué?
+- Usaremos `Explainer` genérico porque los Transformers no son modelos basados en árboles. `TreeExplainer` está optimizado para modelos como XGBoost o Random Forest, pero no funciona bien con redes neuronales complejas como DistilBERT.
 
 **2.6** ¿Qué significa un SHAP value de +0.5 para la palabra "excelente" en análisis de sentimientos?
+- Significa que la palabra "excelente" contribuye positivamente a la predicción de sentimiento positivo, aumentando la probabilidad de esa clase en 0.5 unidades en la escala log-odds del modelo.
 
 **2.7** ¿Cómo agregamos SHAP values de múltiples ejemplos para obtener importancia global de palabras?
+- Calculamos el valor absoluto promedio de SHAP para cada palabra a lo largo de todos los ejemplos. Esto nos da una medida de la importancia global de cada palabra en el conjunto de datos.
 
 ---
 
