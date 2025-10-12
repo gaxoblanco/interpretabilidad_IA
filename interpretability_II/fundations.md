@@ -9,11 +9,36 @@ Estas son las preguntas sobre conceptos **nuevos** que no vimos en Módulo I. En
 
 ### Conceptos Esenciales
 
-**1.1** ¿Qué es el mecanismo de **self-attention**? Explica con un ejemplo simple de una oración.
+**1.1** ¿Qué es el mecanismo de **self-attention**?
+- Permite que una palabra "mire/compare" con otras en la misma oración. Con esto podemos darle un peso a cada palabra, igual que en interretavility_I las values tienen un "peso" que cuanto afectan para la decision final.
 
 **1.2** ¿Qué es **multi-head attention**? ¿Por qué usar 12 "cabezas" en vez de 1?
+- Utilizar multiples "cabezas" permite al modelo capturar diferentes tipos de relaciones entre palabras en paralelo. Cada cabeza puede enfocarse en distintos aspectos del contexto. Pero segun cada caso se puede usar mas o menos cabezas.
 
-**1.3** Dibuja un diagrama simplificado: ¿Cómo fluye el texto desde input hasta predicción en DistilBERT?
+**1.3** ¿Cómo fluye el texto desde input hasta predicción en un Transformer encoder para clasificación?
+INPUT TEXT
+    ↓
+[TOKENIZER] → [CLS] word1 word2 ... [SEP]
+    ↓
+[EMBEDDINGS] → Vectores + Posiciones
+    ↓
+[LAYER 1] → Multi-Head Attention + FFN
+    ↓
+[LAYER 2] → Multi-Head Attention + FFN
+    ↓
+    ...
+    ↓
+[LAYER N] → Multi-Head Attention + FFN
+    ↓
+[EXTRACT [CLS]] → Vector de 768 dims
+    ↓
+[LINEAR + SOFTMAX] → [prob_clase1, prob_clase2, ...]
+    ↓
+PREDICTION
+
+[CLS] vector (768) → Linear → [2.3, -1.8] → Softmax → [0.92, 0.08]
+                                                         ↑      ↑
+                                                      Positivo Negativo
 
 **1.4** ¿Qué es el token `[CLS]` y por qué lo usamos para clasificación?
 
