@@ -1,0 +1,421 @@
+# ============================================================================
+# .GITIGNORE - Proyecto Interpretabilidad NLP
+# Módulo II: DistilBERT + SHAP + LIME
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# PYTHON BÁSICO
+# ----------------------------------------------------------------------------
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# pdm
+.pdm.toml
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# ----------------------------------------------------------------------------
+# HUGGINGFACE & TRANSFORMERS
+# ----------------------------------------------------------------------------
+# Modelos pre-entrenados descargados (pueden ser GB de tamaño)
+data/cache/
+data/models/
+models/
+*.bin
+*.safetensors
+*.h5
+*.ckpt
+*.pth
+*.pt
+
+# HuggingFace cache (puede ser MUY grande)
+.cache/huggingface/
+~/.cache/huggingface/
+transformers_cache/
+hub/
+
+# Tokenizers cache
+tokenizers/
+
+# ----------------------------------------------------------------------------
+# DATASETS
+# ----------------------------------------------------------------------------
+# Datasets descargados (IMDb puede ser ~80MB)
+data/raw/
+data/processed/
+datasets/
+*.arrow
+*.csv.gz
+*.json.gz
+*.parquet
+
+# Archivos temporales de datasets
+data/tmp/
+data/temp/
+
+# ----------------------------------------------------------------------------
+# MACHINE LEARNING ARTIFACTS
+# ----------------------------------------------------------------------------
+# Checkpoints de entrenamiento
+checkpoints/
+lightning_logs/
+runs/
+outputs/
+wandb/
+
+# TensorBoard logs
+logs/
+tensorboard/
+tb_logs/
+
+# MLflow
+mlruns/
+
+# Weights & Biases
+wandb/
+
+# Saved models (tus propios modelos fine-tuneados)
+saved_models/
+*.model
+*.pkl
+*.pickle
+
+# SHAP explainer cache (puede ser grande)
+shap_cache/
+.shap_cache/
+
+# ----------------------------------------------------------------------------
+# NOTEBOOKS
+# ----------------------------------------------------------------------------
+# Jupyter Notebook outputs (para mantener notebooks limpios)
+# *.ipynb
+!notebooks/*.ipynb  # Pero SÍ incluir los notebooks principales
+
+# Jupyter temporales
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+
+# ----------------------------------------------------------------------------
+# VISUALIZACIONES Y RESULTADOS
+# ----------------------------------------------------------------------------
+# Gráficos generados (regenerables)
+plots/
+figures/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+!docs/images/*.png  # Pero SÍ incluir imágenes de documentación
+
+# Resultados de experimentos (pueden ser grandes)
+results/
+experiments/
+outputs/
+
+# ----------------------------------------------------------------------------
+# STREAMLIT
+# ----------------------------------------------------------------------------
+# Streamlit cache
+.streamlit/
+streamlit_cache/
+
+# ----------------------------------------------------------------------------
+# SISTEMA OPERATIVO
+# ----------------------------------------------------------------------------
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ----------------------------------------------------------------------------
+# IDEs Y EDITORES
+# ----------------------------------------------------------------------------
+# VSCode
+.vscode/
+*.code-workspace
+.history/
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Sublime Text
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+*.sublime-workspace
+*.sublime-project
+
+# Vim
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+Session.vim
+Sessionx.vim
+.netrwhist
+*~
+tags
+[._]*.un~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ----------------------------------------------------------------------------
+# CONFIGURACIONES PRIVADAS
+# ----------------------------------------------------------------------------
+# Variables de entorno con secrets
+.env
+.env.local
+.env.*.local
+*.env
+
+# Configuraciones privadas (API keys, tokens)
+config/secrets.yaml
+config/private.yaml
+secrets/
+credentials/
+*.key
+*.pem
+*.cert
+
+# ----------------------------------------------------------------------------
+# TEMPORAL Y BACKUP
+# ----------------------------------------------------------------------------
+# Archivos temporales
+tmp/
+temp/
+*.tmp
+*.temp
+*.swp
+*.swo
+*.bak
+*.backup
+*~
+
+# Locks
+*.lock
+
+# Logs generales
+*.log
+logs/
+
+# ----------------------------------------------------------------------------
+# ARCHIVOS GRANDES (Git LFS candidatos)
+# ----------------------------------------------------------------------------
+# Si decides NO usar Git LFS, excluye estos:
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# Archivos de datos grandes
+*.hdf5
+*.h5
+*.npy
+*.npz
+
+# ----------------------------------------------------------------------------
+# PROYECTO ESPECÍFICO
+# ----------------------------------------------------------------------------
+# Tus propios experimentos temporales
+sandbox/
+experiments/
+scratch/
+test_*.py
+debug_*.py
+
+# Archivos de análisis temporal
+analysis_temp/
+explore_*.ipynb
+
+# Reportes generados (PDF/HTML pueden regenerarse)
+reports/*.html
+reports/*.pdf
+
+# ============================================================================
+# ARCHIVOS QUE SÍ DEBEN INCLUIRSE (excepciones explícitas)
+# ============================================================================
+# !data/sample/example.csv           # Datos de ejemplo pequeños
+# !models/config.json                # Configuraciones de modelo
+# !docs/images/*.png                 # Imágenes de documentación
+# !notebooks/*.ipynb                 # Notebooks principales

@@ -180,6 +180,9 @@ Ejemplo: `"This movie is absolutely fantastic"`
 | **Limitación** | Muy lento | Inestable, sin garantías |
 
 **4.2** Si SHAP dice "excelente" es importante (+0.5) pero LIME dice "fantastic" (+0.8), ¿cómo interpretas eso?
+- LIME usa referencia local, por lo que "fantastic" puede ser más relevante en ese contexto específico. 
+- SHAP da una visión más global, donde "excelente" tiene un impacto consistente en muchas predicciones. 
+- Ambos pueden ser correctos, pero reflejan diferentes perspectivas.
 
 **4.3** ¿Cuándo preferirías SHAP sobre LIME en este proyecto de sentimientos?
 
@@ -187,7 +190,7 @@ Ejemplo: `"This movie is absolutely fantastic"`
 
 ---
 
-## 🎯 BLOQUE 5: Validación de Explicaciones (LO NUEVO)
+## 🎯 BLOQUE 5: Validación de Explicaciones
 
 ### Métricas que Implementarás
 

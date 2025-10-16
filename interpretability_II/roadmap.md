@@ -14,17 +14,16 @@ Implementar SHAP y LIME para explicar predicciones de un modelo DistilBERT en an
 **Objetivo:** Entender qué es interpretabilidad y cómo funcionan Transformers
 
 **Actividades:**
-- [ ] Leer sobre interpretabilidad en ML (1 paper: Ribeiro LIME 2016)
-- [ ] Estudiar arquitectura de Transformers (attention mechanism)
-- [ ] Entender qué es DistilBERT y cómo difiere de BERT
-- [ ] Crear documento con conceptos clave
+- [x] Leer sobre interpretabilidad en ML (1 paper: Ribeiro LIME 2016)
+- [x] Estudiar arquitectura de Transformers (attention mechanism)
+- [x] Entender qué es DistilBERT y cómo difiere de BERT
+- [x] Crear documento con conceptos clave
 
 **Entregable:**
 ```
-docs/01_fundamentos.md
-  - Definición de interpretabilidad
-  - Diagrama simple de Transformer
-  - Cuándo usar SHAP vs LIME
+docs/fundamentos.md
+  - Completar el cuestionario de teoría
+  - Resumen de conceptos clave (Transformers, DistilBERT, SHAP, LIME)
 ```
 
 **Tiempo:** 6-8 horas
@@ -36,8 +35,8 @@ docs/01_fundamentos.md
 
 **Actividades:**
 - [ ] Estudiar valores de Shapley (teoría de juegos)
-- [ ] Entender algoritmo de perturbación de LIME
-- [ ] Implementar ejemplo TOY en datos tabulares simples
+- [x] Entender algoritmo de perturbación de LIME
+- [x] Implementar ejemplo TOY en datos tabulares simples
 - [ ] Comparar resultados en el ejemplo toy
 
 **Entregable:**

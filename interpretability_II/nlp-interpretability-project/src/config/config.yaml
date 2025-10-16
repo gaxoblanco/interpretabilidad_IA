@@ -1,0 +1,379 @@
+# ============================================================================
+# CONFIG.YAML - Configuraciones Centralizadas
+# Proyecto: Interpretabilidad en NLP con DistilBERT
+# Módulo II: SHAP + LIME
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# PROYECTO: Información general
+# ----------------------------------------------------------------------------
+project:
+  name: "nlp-interpretability-project"
+  version: "1.0.0"
+  description: "Análisis de sentimientos con DistilBERT usando SHAP y LIME"
+  author: "Estudiante Módulo II"
+  created_date: "2025-01-15"
+
+# ----------------------------------------------------------------------------
+# PATHS: Rutas de archivos y directorios
+# ----------------------------------------------------------------------------
+paths:
+  # Directorio raíz del proyecto
+  root: "."
+
+  # Datos
+  data_dir: "data"
+  cache_dir: "data/cache"
+  raw_data: "data/raw"
+  processed_data: "data/processed"
+
+  # Modelos
+  models_dir: "data/models"
+  checkpoints_dir: "checkpoints"
+
+  # Resultados
+  results_dir: "results"
+  plots_dir: "results/plots"
+  logs_dir: "results/logs"
+
+  # Notebooks
+  notebooks_dir: "notebooks"
+
+  # Aplicación
+  streamlit_cache: ".streamlit/cache"
+
+# ----------------------------------------------------------------------------
+# MODEL: Configuración del modelo DistilBERT
+# ----------------------------------------------------------------------------
+model:
+  # Nombre del modelo en HuggingFace Hub
+  name: "distilbert-base-uncased-finetuned-sst-2-english"
+
+  # Alternativas (comentadas):
+  # name: "distilbert-base-uncased"  # Sin fine-tune
+  # name: "bert-base-uncased"         # BERT completo (más lento)
+
+  # Parámetros del modelo
+  max_length: 512 # Máximo de tokens (límite de DistilBERT)
+  truncation: true # Truncar textos largos
+  padding: "max_length" # Estrategia de padding
+  return_tensors: "pt" # PyTorch tensors
+
+  # Device configuration
+  device: "auto" # Opciones: "auto", "cpu", "cuda", "mps"
+
+  # Inferencia
+  batch_size: 8 # Batch size para predicciones
+  num_workers: 2 # Workers para DataLoader
+
+  # Cache
+  cache_model: true # Cachear modelo descargado
+  use_fast_tokenizer: true # Usar tokenizer rápido (Rust)
+
+# ----------------------------------------------------------------------------
+# DATASET: Configuración del dataset IMDb
+# ----------------------------------------------------------------------------
+dataset:
+  # Nombre del dataset en HuggingFace
+  name: "imdb"
+
+  # Splits a utilizar
+  train_split: "train"
+  test_split: "test"
+
+  # Tamaños (null = usar todo el dataset)
+  train_size: null # null = 25,000 ejemplos
+  test_size: 1000 # Limitar a 1000 para experimentación rápida
+
+  # Validación
+  validation_split: 0.1 # 10% del train para validación
+
+  # Preprocessing
+  lowercase: true # Convertir a minúsculas
+  remove_html: true # Eliminar tags HTML
+  remove_urls: true # Eliminar URLs
+  remove_special_chars: false # Mantener puntuación
+
+  # Filtros
+  min_length: 10 # Mínimo de palabras por review
+  max_length: 512 # Máximo de palabras (por límite del modelo)
+
+  # Cache
+  cache_dataset: true # Cachear dataset descargado
+
+# ----------------------------------------------------------------------------
+# SHAP: Configuración de SHAP Explainer
+# ----------------------------------------------------------------------------
+shap:
+  # Tipo de explainer
+  explainer_type: "Partition" # Opciones: "Partition", "Kernel", "Sampling"
+
+  # Parámetros de perturbación
+  num_samples: 1000 # Número de perturbaciones (más = mejor, más lento)
+  max_evals: 2000 # Máximo de evaluaciones del modelo
+
+  # Masking strategy
+  masking_strategy: "mask_token" # Opciones: "mask_token", "remove", "zero"
+  mask_token: "[MASK]" # Token para reemplazar palabras
+
+  # Agregación
+  aggregation: "mean" # Cómo agregar SHAP values: "mean", "sum", "max"
+
+  # Visualización
+  max_display: 20 # Máximo de tokens a mostrar en plots
+  plot_type: "waterfall" # Tipo de gráfico por defecto
+
+  # Performance
+  batch_size: 16 # Batch size para evaluaciones
+  use_cache: true # Cachear explicaciones calculadas
+  cache_dir: "data/cache/shap"
+
+  # Timeouts
+  timeout_seconds: 300 # Timeout por explicación (5 min)
+
+# ----------------------------------------------------------------------------
+# LIME: Configuración de LIME Explainer
+# ----------------------------------------------------------------------------
+lime:
+  # Parámetros de perturbación
+  num_samples: 5000 # Número de perturbaciones (típico: 1000-10000)
+  num_features: 10 # Número de features en la explicación
+
+  # Estrategia de perturbación
+  perturbation_strategy: "removal" # Opciones: "removal", "replacement"
+
+  # Modelo local
+  kernel_width: 25 # Ancho del kernel para pesos de similitud
+  distance_metric: "cosine" # Métrica de distancia: "cosine", "euclidean"
+
+  # Regularización
+  feature_selection: "auto" # Método de selección: "auto", "forward_selection", "lasso"
+  alpha: 1.0 # Parámetro de regularización
+
+  # Tokenización
+  split_expression: r'\W+' # Regex para dividir tokens
+  bow: true # Bag-of-words representation
+
+  # Reproducibilidad
+  random_state: 42 # Seed para reproducibilidad
+
+  # Performance
+  use_cache: true # Cachear explicaciones
+  cache_dir: "data/cache/lime"
+
+  # Timeouts
+  timeout_seconds: 180 # Timeout por explicación (3 min)
+
+# ----------------------------------------------------------------------------
+# EVALUATION: Métricas de evaluación
+# ----------------------------------------------------------------------------
+evaluation:
+  # Métricas del modelo base
+  model_metrics:
+    - "accuracy"
+    - "precision"
+    - "recall"
+    - "f1_score"
+    - "confusion_matrix"
+
+  # Métricas de interpretabilidad
+  interpretability_metrics:
+    - "fidelity" # ¿Explicación refleja el modelo?
+    - "stability" # ¿Consistencia entre ejecuciones?
+    - "consistency" # ¿SHAP y LIME coinciden?
+
+  # Parámetros de validación
+  fidelity:
+    top_k_features: 5 # Top-K features a remover
+    perturbation_type: "removal"
+
+  stability:
+    num_runs: 10 # Repeticiones para medir estabilidad
+    similarity_threshold: 0.7 # Umbral de similitud aceptable
+
+  consistency:
+    correlation_method: "spearman" # Método de correlación
+    min_correlation: 0.5 # Correlación mínima aceptable
+
+# ----------------------------------------------------------------------------
+# VISUALIZATION: Configuraciones de gráficos
+# ----------------------------------------------------------------------------
+visualization:
+  # Configuración general
+  style: "seaborn-v0_8-darkgrid" # Estilo de matplotlib
+  context: "notebook" # Contexto de seaborn: "paper", "notebook", "talk", "poster"
+  palette: "viridis" # Paleta de colores
+
+  # Tamaños
+  figsize:
+    default: [10, 6] # Ancho x Alto en pulgadas
+    wide: [14, 6]
+    square: [8, 8]
+    dashboard: [12, 8]
+
+  # DPI y calidad
+  dpi: 100 # Resolución de imágenes
+  save_format: "png" # Formato: "png", "pdf", "svg"
+
+  # Fuentes
+  font_family: "sans-serif"
+  font_size: 12
+  title_size: 14
+  label_size: 11
+
+  # Colores específicos
+  colors:
+    positive: "#4CAF50" # Verde para sentimiento positivo
+    negative: "#F44336" # Rojo para sentimiento negativo
+    neutral: "#9E9E9E" # Gris para neutro
+    shap: "#1E88E5" # Azul para SHAP
+    lime: "#FFA726" # Naranja para LIME
+
+  # Plots específicos
+  heatmap:
+    cmap: "RdYlGn" # Colormap para importancia de tokens
+    vmin: -1.0
+    vmax: 1.0
+    center: 0.0
+
+  waterfall:
+    max_display: 20 # Máximo de features
+    show_data: true
+
+  bar_plot:
+    max_features: 15
+    horizontal: true
+
+# ----------------------------------------------------------------------------
+# DASHBOARD: Configuración de Streamlit
+# ----------------------------------------------------------------------------
+dashboard:
+  # Configuración general
+  title: "🔍 Explicador de Sentimientos - DistilBERT"
+  page_icon: "🤖"
+  layout: "wide" # "centered" o "wide"
+  initial_sidebar_state: "expanded"
+
+  # Límites
+  max_input_length: 500 # Máximo de caracteres en input
+  examples_to_show: 5 # Ejemplos predefinidos
+
+  # Features habilitadas
+  enable_shap: true
+  enable_lime: true
+  enable_comparison: true # Comparación lado a lado
+  enable_batch: false # Análisis de múltiples textos (futuro)
+
+  # Performance
+  cache_predictions: true # Cachear predicciones
+  show_progress: true # Mostrar barras de progreso
+
+  # Ejemplos predefinidos
+  examples:
+    - "This movie was absolutely fantastic! I loved every minute of it."
+    - "Terrible waste of time. I want my money back."
+    - "It was okay, nothing special but not bad either."
+    - "The acting was superb, but the plot was confusing and slow."
+    - "I've never seen anything more boring in my entire life."
+
+# ----------------------------------------------------------------------------
+# LOGGING: Configuración de logs
+# ----------------------------------------------------------------------------
+logging:
+  # Nivel de logging
+  level: "INFO" # DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+  # Formato
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  date_format: "%Y-%m-%d %H:%M:%S"
+
+  # Archivos
+  log_to_file: true
+  log_file: "results/logs/app.log"
+  max_bytes: 10485760 # 10MB
+  backup_count: 5 # Mantener 5 archivos de backup
+
+  # Console output
+  log_to_console: true
+  console_level: "INFO"
+
+# ----------------------------------------------------------------------------
+# EXPERIMENT: Configuración de experimentos
+# ----------------------------------------------------------------------------
+experiment:
+  # Identificación
+  name: "baseline_distilbert"
+  description: "Evaluación base de DistilBERT con SHAP y LIME"
+
+  # Reproducibilidad
+  random_seed: 42
+  deterministic: true
+
+  # Casos de estudio
+  num_case_studies: 10 # Número de casos a analizar en detalle
+
+  # Selección de casos
+  case_selection:
+    - "high_confidence_correct" # Predicciones correctas con alta confianza
+    - "high_confidence_incorrect" # Predicciones incorrecas con alta confianza
+    - "low_confidence" # Predicciones con baja confianza
+    - "disagreement" # SHAP y LIME no coinciden
+    - "ambiguous" # Textos ambiguos o sarcásticos
+
+# ----------------------------------------------------------------------------
+# PERFORMANCE: Optimizaciones
+# ----------------------------------------------------------------------------
+performance:
+  # Multiprocessing
+  use_multiprocessing: false # Usar múltiples procesos (cuidado con CUDA)
+  num_processes: 4 # Número de procesos paralelos
+
+  # Memory management
+  clear_cache_frequency: 100 # Limpiar cache cada N iteraciones
+  max_cache_size_mb: 2048 # Tamaño máximo de cache (2GB)
+
+  # GPU
+  fp16: false # Usar precisión mixta (más rápido, menos preciso)
+  gpu_memory_fraction: 0.8 # Fracción de GPU a usar
+
+# ----------------------------------------------------------------------------
+# DESARROLLO: Flags de desarrollo
+# ----------------------------------------------------------------------------
+development:
+  debug_mode: false # Modo debug (más verbose)
+  profile_code: false # Profiling de performance
+  save_intermediate: true # Guardar resultados intermedios
+
+  # Testing
+  test_mode: false # Usar subset pequeño para testing rápido
+  test_sample_size: 10 # Tamaño de muestra en test mode
+
+  # Warnings
+  ignore_warnings: false # Suprimir warnings de librerías
+
+# ============================================================================
+# NOTAS DE USO
+# ============================================================================
+#
+# 1. CARGAR CONFIGURACIÓN EN PYTHON:
+#    ```python
+#    import yaml
+#    with open('src/config/config.yaml', 'r') as f:
+#        config = yaml.safe_load(f)
+#
+#    # Acceder a valores
+#    model_name = config['model']['name']
+#    shap_samples = config['shap']['num_samples']
+#    ```
+#
+# 2. VARIABLES DE ENTORNO:
+#    Puedes usar variables de entorno para valores sensibles:
+#    ${HUGGINGFACE_TOKEN}
+#
+# 3. PROFILES:
+#    Crea configs específicos: config_dev.yaml, config_prod.yaml
+#
+# 4. VALIDACIÓN:
+#    Siempre valida que las rutas existan antes de usar
+#
+# ============================================================================
