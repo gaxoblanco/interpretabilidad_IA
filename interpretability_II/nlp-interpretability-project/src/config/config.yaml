@@ -49,8 +49,18 @@ model:
   # Nombre del modelo en HuggingFace Hub
   name: "distilbert-base-uncased-finetuned-sst-2-english"
 
+  # OPCIÓN A: RoBERTa (Mejor precisión)
+  # name: "cardiffnlp/twitter-roberta-base-sentiment-latest"
+
+  # OPCIÓN B: BERT completo (Más preciso que DistilBERT)
+  # name: "textattack/bert-base-uncased-SST-2"
+
+  # OPCIÓN C: Multilingüe (Si necesitas español)
+  # name: "lxyuan/distilbert-base-multilingual-cased-sentiments-student"
+
   # Alternativas (comentadas):
   # name: "distilbert-base-uncased"  # Sin fine-tune
+  # name: "distilbert-base-uncased-finetuned-sst-2-english" # Fine-tuned en SST-2
   # name: "bert-base-uncased"         # BERT completo (más lento)
 
   # Parámetros del modelo
@@ -69,7 +79,6 @@ model:
   # Cache
   cache_model: true # Cachear modelo descargado
   use_fast_tokenizer: true # Usar tokenizer rápido (Rust)
-
 # ----------------------------------------------------------------------------
 # DATASET: Configuración del dataset IMDb
 # ----------------------------------------------------------------------------
@@ -100,6 +109,37 @@ dataset:
 
   # Cache
   cache_dataset: true # Cachear dataset descargado
+
+# # ----------------------------------------------------------------------------
+# # DATASET: Configuración del dataset SST2
+# # ----------------------------------------------------------------------------
+# dataset:
+#   # CAMBIO 1: Nombre del dataset
+#   name: "sst2"
+
+#   # CAMBIO 2: Splits (SST-2 usa nombres diferentes)
+#   train_split: "train" # SST-2 usa "train"
+#   test_split: "validation" # SST-2 usa "validation" como test (no tiene "test" público)
+
+#   # CAMBIO 3: Tamaños (SST-2 es más pequeño que IMDb)
+#   train_size: null # null = usar todo (67,349 ejemplos)
+#   test_size: 1000 # Limitar a 1000 para evaluación rápida (de 872 totales, usará todos)
+
+#   # CAMBIO 4: Split de validación
+#   validation_split: 0.1 # Puede mantenerse igual
+
+#   # CAMBIO 5: Preprocesamiento (SST-2 ya viene limpio)
+#   lowercase: false # SST-2 ya está preprocesado
+#   remove_html: false # No hay HTML en SST-2
+#   remove_urls: false # No hay URLs en SST-2
+#   remove_special_chars: false # Mantener puntuación
+
+#   # CAMBIO 6: Longitudes (SST-2 tiene frases más cortas)
+#   min_length: 5 # Frases muy cortas en SST-2
+#   max_length: 200 # SST-2 tiene frases cortas, no reviews largos
+
+#   # Cache
+#   cache_dataset: true # Cachear dataset descargado
 
 # ----------------------------------------------------------------------------
 # SHAP: Configuración de SHAP Explainer

@@ -13,13 +13,13 @@ Este módulo proporciona la clase DataLoader para:
 Flujo de uso:
     from src.utils.data_loader import DataLoader
     from src.config import Config
-    
+
     config = Config()
     data = DataLoader(config)
-    
+
     # Obtener datos de train
     train_data = data.get_train_data()
-    
+
     # Obtener muestra aleatoria
     sample = data.get_random_sample(n=5)
 
@@ -132,12 +132,13 @@ class DataLoader:
 
         # Cargar dataset
         self.dataset = self._load_dataset()
+        logger.info(f"Formato del dataset: {self.dataset}")
 
         # Aplicar preprocessing
-        self.dataset = self._preprocess_dataset()
+        # self.dataset = self._preprocess_dataset()
 
         # Crear splits
-        self._create_splits()
+        # self._create_splits()
 
         logger.info("✅ DataLoader inicializado exitosamente")
 
@@ -155,7 +156,8 @@ class DataLoader:
             # Cargar dataset completo
             dataset = load_dataset(
                 self.dataset_name,
-                cache_dir=str(self.cache_dir)
+                cache_dir=str(self.cache_dir),
+                keep_in_memory=False
             )
 
             logger.info(f"✅ Dataset cargado:")
@@ -168,7 +170,7 @@ class DataLoader:
                 dataset['train'] = dataset['train'].select(
                     range(self.train_size))
 
-            # ⭐ NUEVO: Subset estratificado usando train_test_split
+            # Subset estratificado usando train_test_split
             if self.test_size is not None:
                 logger.info(
                     f"   Limitando test a {self.test_size} ejemplos (estratificado)")
@@ -274,7 +276,7 @@ class DataLoader:
 
         def preprocess_example(example):
             """Función auxiliar para procesar un ejemplo"""
-            example['text'] = self._preprocess_text(example['text'])
+            example['sentence'] = self._preprocess_text(example['sentence'])
             return example
 
         # Aplicar preprocessing a todos los splits
@@ -304,7 +306,7 @@ class DataLoader:
             """Función auxiliar para filtrar por longitud EN TOKENS"""
             # Contar tokens en vez de palabras
             # Aproximación: 1.3 palabras ≈ 1 token en promedio
-            num_words = len(example['text'].split())
+            num_words = len(example['sentence'].split())
             estimated_tokens = int(num_words * 1.3)
 
             # Filtro conservador: max 380 palabras ≈ 494 tokens
@@ -373,8 +375,8 @@ class DataLoader:
         logger.info("✂️  Creando splits finales...")
 
         # Filtrar por longitud
-        filtered_train = self._filter_by_length(self.dataset['train'])
-        filtered_test = self._filter_by_length(self.dataset['test'])
+        filtered_train = self.dataset['train']
+        filtered_test = self.dataset['test']
 
         # Crear split de validación
         self.train_data, self.validation_data = self._create_validation_split(
@@ -404,7 +406,7 @@ class DataLoader:
         Example:
             >>> train = loader.get_train_data()
             >>> print(train[0])
-            {'text': 'this movie is great!', 'label': 1}
+            {'sentence': 'this movie is great!', 'label': 1}
         """
         return self.train_data
 
@@ -446,7 +448,7 @@ class DataLoader:
         Example:
             >>> sample = loader.get_sample(n=3, split='train')
             >>> for example in sample:
-            ...     print(f"{example['text'][:50]}... - {example['label']}")
+            ...     print(f"{example['sentence'][:50]}... - {example['label']}")
         """
         # Seleccionar dataset
         if split == 'train':
@@ -472,7 +474,7 @@ class DataLoader:
 
         return [
             {
-                'text': example['text'],
+                'sentence': example['sentence'],
                 'label': example['label'],
                 'label_name': 'POSITIVE' if example['label'] == 1 else 'NEGATIVE'
             }
@@ -529,7 +531,7 @@ class DataLoader:
 
         return [
             {
-                'text': example['text'],
+                'sentence': example['sentence'],
                 'label': example['label'],
                 'label_name': 'POSITIVE' if example['label'] == 1 else 'NEGATIVE'
             }
@@ -590,7 +592,7 @@ class DataLoader:
 
         return [
             {
-                'text': example['text'],
+                'sentence': example['sentence'],
                 'label': example['label'],
                 'label_name': 'POSITIVE' if example['label'] == 1 else 'NEGATIVE'
             }
@@ -610,8 +612,8 @@ class DataLoader:
             >>> print(f"Avg words: {info['avg_length']:.1f}")
         """
         # Calcular estadísticas de longitud (palabras)
-        train_lengths = [len(x['text'].split()) for x in self.train_data]
-        test_lengths = [len(x['text'].split()) for x in self.test_data]
+        train_lengths = [len(x['sentence'].split()) for x in self.train_data]
+        test_lengths = [len(x['sentence'].split()) for x in self.test_data]
 
         # Contar labels
         train_labels = [x['label'] for x in self.train_data]
@@ -690,30 +692,33 @@ if __name__ == "__main__":
         else:
             print(f"  • {key}: {value}")
 
+    # 3.1 Modelo los datos para mi caso de uso
+    # El modelo trabaja con 0 y 1,
+
     # 4. Muestra de ejemplos
     print("\n📝 MUESTRA DE EJEMPLOS (Train):")
     sample = loader.get_sample(n=3, split='train')
     for i, example in enumerate(sample, 1):
         print(f"\n{i}. [{example['label_name']}]")
-        print(f"   {example['text'][:100]}...")
+        print(f"   {example['sentence'][:100]}...")
 
     # 5. Muestra aleatoria
     print("\n🎲 MUESTRA ALEATORIA (Test):")
     random_sample = loader.get_random_sample(n=3, split='test', seed=42)
     for i, example in enumerate(random_sample, 1):
         print(f"\n{i}. [{example['label_name']}]")
-        print(f"   {example['text'][:100]}...")
+        print(f"   {example['sentence'][:100]}...")
 
     # 6. Ejemplos por label
     print("\n✅ EJEMPLOS POSITIVOS:")
     positives = loader.get_by_label(label=1, n=2, split='test')
     for example in positives:
-        print(f"   {example['text'][:80]}...")
+        print(f"   {example['sentence'][:80]}...")
 
     print("\n❌ EJEMPLOS NEGATIVOS:")
     negatives = loader.get_by_label(label=0, n=2, split='test')
     for example in negatives:
-        print(f"   {example['text'][:80]}...")
+        print(f"   {example['sentence'][:80]}...")
 
     print("\n" + "="*60)
     print("✅ Ejemplo completado")
