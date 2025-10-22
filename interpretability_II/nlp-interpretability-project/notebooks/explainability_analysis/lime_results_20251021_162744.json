@@ -1,0 +1,219 @@
+{
+  "metadata": {
+    "model": "distilbert-base-uncased-finetuned-sst-2-english",
+    "method": "LIME",
+    "n_cases_analyzed": 5,
+    "avg_computation_time": 92.0621247291565,
+    "avg_samples_used": 1380.0,
+    "timestamp": "2025-10-21T16:27:44.599348"
+  },
+  "cases": [
+    {
+      "text": "it 's somewhat clumsy and too lethargically paced -- but its story about a mysterious creature with psychic abilities offers a solid build-up , a terrific climax , and some nice chills along the way . ",
+      "true_label": 0,
+      "category": "high_confidence_errors",
+      "computation_time": 127.71756029129028,
+      "num_samples": 1800,
+      "top_positive_words": [
+        {
+          "word": "solid",
+          "importance": 0.2878290119191299
+        },
+        {
+          "word": "terrific",
+          "importance": 0.24632551070787864
+        },
+        {
+          "word": "nice",
+          "importance": 0.15606135106463304
+        },
+        {
+          "word": "but",
+          "importance": 0.1382857141198798
+        },
+        {
+          "word": "a",
+          "importance": 0.09398908735615498
+        }
+      ],
+      "top_negative_words": [
+        {
+          "word": "too",
+          "importance": -0.05096089460699102
+        },
+        {
+          "word": "lethargically",
+          "importance": -0.04721567943116604
+        }
+      ]
+    },
+    {
+      "text": "although huppert 's intensity and focus has a raw exhilaration about it , the piano teacher is anything but fun . ",
+      "true_label": 0,
+      "category": "high_confidence_errors",
+      "computation_time": 50.420844078063965,
+      "num_samples": 1050,
+      "top_positive_words": [
+        {
+          "word": "fun",
+          "importance": 0.6648391823188172
+        },
+        {
+          "word": "exhilaration",
+          "importance": 0.15588543714720624
+        },
+        {
+          "word": "but",
+          "importance": 0.1306358986728136
+        },
+        {
+          "word": "the",
+          "importance": 0.05811551327896035
+        },
+        {
+          "word": "raw",
+          "importance": 0.049727046608067475
+        }
+      ],
+      "top_negative_words": [
+        {
+          "word": "although",
+          "importance": -0.1210789004920458
+        },
+        {
+          "word": "anything",
+          "importance": -0.04330503687275059
+        }
+      ]
+    },
+    {
+      "text": "the lower your expectations , the more you 'll enjoy it . ",
+      "true_label": 0,
+      "category": "high_confidence_errors",
+      "computation_time": 20.26800513267517,
+      "num_samples": 600,
+      "top_positive_words": [
+        {
+          "word": "enjoy",
+          "importance": 0.9540116674002436
+        },
+        {
+          "word": ".",
+          "importance": 0.04701375876470658
+        },
+        {
+          "word": "it",
+          "importance": 0.014964962127375369
+        },
+        {
+          "word": ",",
+          "importance": 0.004616409497550802
+        }
+      ],
+      "top_negative_words": [
+        {
+          "word": "more",
+          "importance": -0.023815234843918245
+        },
+        {
+          "word": "the",
+          "importance": -0.013406203102927977
+        },
+        {
+          "word": "expectations",
+          "importance": -0.010599000210373402
+        },
+        {
+          "word": "the",
+          "importance": -0.009093593764889234
+        },
+        {
+          "word": "you",
+          "importance": -0.005487052644009109
+        }
+      ]
+    },
+    {
+      "text": "the x potion gives the quickly named blossom , bubbles and buttercup supernatural powers that include extraordinary strength and laser-beam eyes , which unfortunately do n't enable them to discern flimsy screenplays . ",
+      "true_label": 0,
+      "category": "borderline_cases",
+      "computation_time": 121.73144030570984,
+      "num_samples": 1650,
+      "top_positive_words": [
+        {
+          "word": "strength",
+          "importance": 0.28425100670921594
+        },
+        {
+          "word": "extraordinary",
+          "importance": 0.2553478029165725
+        },
+        {
+          "word": "discern",
+          "importance": 0.1383865397332766
+        },
+        {
+          "word": "powers",
+          "importance": 0.13716876100920292
+        },
+        {
+          "word": "include",
+          "importance": 0.07227266651624424
+        }
+      ],
+      "top_negative_words": [
+        {
+          "word": "unfortunately",
+          "importance": -0.17529617185886612
+        },
+        {
+          "word": "enable",
+          "importance": -0.15563344313931693
+        },
+        {
+          "word": "potion",
+          "importance": -0.09280866662983114
+        }
+      ]
+    },
+    {
+      "text": "it 's somewhat clumsy and too lethargically paced -- but its story about a mysterious creature with psychic abilities offers a solid build-up , a terrific climax , and some nice chills along the way . ",
+      "true_label": 0,
+      "category": "false_positives",
+      "computation_time": 140.1727738380432,
+      "num_samples": 1800,
+      "top_positive_words": [
+        {
+          "word": "solid",
+          "importance": 0.27213230218772383
+        },
+        {
+          "word": "terrific",
+          "importance": 0.23501938677303608
+        },
+        {
+          "word": "but",
+          "importance": 0.16381805895078289
+        },
+        {
+          "word": "nice",
+          "importance": 0.16195318751934654
+        },
+        {
+          "word": "a",
+          "importance": 0.08697628880495112
+        }
+      ],
+      "top_negative_words": [
+        {
+          "word": "too",
+          "importance": -0.05571101735344071
+        },
+        {
+          "word": "and",
+          "importance": -0.044280299248610946
+        }
+      ]
+    }
+  ]
+}

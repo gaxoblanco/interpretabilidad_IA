@@ -1,0 +1,257 @@
+{
+  "metadata": {
+    "model": "distilbert-base-uncased-finetuned-sst-2-english",
+    "method": "SHAP",
+    "n_cases_analyzed": 5,
+    "avg_computation_time": 3.9726308822631835,
+    "timestamp": "2025-10-21T09:44:56.262025"
+  },
+  "cases": [
+    {
+      "text": "it 's somewhat clumsy and too lethargically paced -- but its story about a mysterious creature with psychic abilities offers a solid build-up , a terrific climax , and some nice chills along the way . ",
+      "true_label": 0,
+      "category": "high_confidence_errors",
+      "computation_time": 4.43530011177063,
+      "top_positive_words": [
+        {
+          "token": "a ",
+          "value": 0.05746222473680973
+        },
+        {
+          "token": "a ",
+          "value": 0.06443654621640842
+        },
+        {
+          "token": "terrific ",
+          "value": 0.1198882522682349
+        },
+        {
+          "token": "solid ",
+          "value": 0.2194763720035553
+        },
+        {
+          "token": "nice ",
+          "value": 0.22163396494256127
+        }
+      ],
+      "top_negative_words": [
+        {
+          "token": "climax ",
+          "value": -0.0645469290514787
+        },
+        {
+          "token": "and ",
+          "value": -0.0324099680615796
+        },
+        {
+          "token": "way ",
+          "value": -0.03217735348476304
+        },
+        {
+          "token": "it ",
+          "value": -0.024125766940414906
+        },
+        {
+          "token": "its ",
+          "value": -0.018632938154041767
+        }
+      ]
+    },
+    {
+      "text": "although huppert 's intensity and focus has a raw exhilaration about it , the piano teacher is anything but fun . ",
+      "true_label": 0,
+      "category": "high_confidence_errors",
+      "computation_time": 4.20197057723999,
+      "top_positive_words": [
+        {
+          "token": "but ",
+          "value": 0.08150094002485275
+        },
+        {
+          "token": "ex",
+          "value": 0.08963348468144734
+        },
+        {
+          "token": "piano ",
+          "value": 0.09036922454833984
+        },
+        {
+          "token": "hila",
+          "value": 0.24187487674256167
+        },
+        {
+          "token": "fun ",
+          "value": 0.4554153084754944
+        }
+      ],
+      "top_negative_words": [
+        {
+          "token": "anything ",
+          "value": -0.26456425835688907
+        },
+        {
+          "token": ".",
+          "value": -0.09866363555192947
+        },
+        {
+          "token": "although ",
+          "value": -0.09580060839653015
+        },
+        {
+          "token": "ration ",
+          "value": -0.046160787964860596
+        },
+        {
+          "token": "it ",
+          "value": -0.04276735335588455
+        }
+      ]
+    },
+    {
+      "text": "the lower your expectations , the more you 'll enjoy it . ",
+      "true_label": 0,
+      "category": "high_confidence_errors",
+      "computation_time": 2.9205973148345947,
+      "top_positive_words": [
+        {
+          "token": ".",
+          "value": 0.0029274672269821167
+        },
+        {
+          "token": "'",
+          "value": 0.08144663646817207
+        },
+        {
+          "token": "ll ",
+          "value": 0.11464584060013294
+        },
+        {
+          "token": "you ",
+          "value": 0.14499719813466072
+        },
+        {
+          "token": "enjoy ",
+          "value": 0.7755432073026896
+        }
+      ],
+      "top_negative_words": [
+        {
+          "token": "it ",
+          "value": -0.10744817182421684
+        },
+        {
+          "token": "more ",
+          "value": -0.00945187360048294
+        },
+        {
+          "token": "the ",
+          "value": -0.0030536651611328125
+        },
+        {
+          "token": "lower ",
+          "value": -0.0004043877124786377
+        }
+      ]
+    },
+    {
+      "text": "the x potion gives the quickly named blossom , bubbles and buttercup supernatural powers that include extraordinary strength and laser-beam eyes , which unfortunately do n't enable them to discern flimsy screenplays . ",
+      "true_label": 0,
+      "category": "borderline_cases",
+      "computation_time": 4.159982204437256,
+      "top_positive_words": [
+        {
+          "token": "disc",
+          "value": 0.049222972989082334
+        },
+        {
+          "token": "powers ",
+          "value": 0.07689028854171436
+        },
+        {
+          "token": "strength ",
+          "value": 0.11456908052787185
+        },
+        {
+          "token": "extraordinary ",
+          "value": 0.12270130170509219
+        },
+        {
+          "token": "blossom ",
+          "value": 0.12593328108390173
+        }
+      ],
+      "top_negative_words": [
+        {
+          "token": "unfortunately ",
+          "value": -0.19143172353506088
+        },
+        {
+          "token": "t ",
+          "value": -0.19022663806875548
+        },
+        {
+          "token": "laser",
+          "value": -0.12929129991680383
+        },
+        {
+          "token": "fl",
+          "value": -0.12513645676275095
+        },
+        {
+          "token": ", ",
+          "value": -0.11423940509557724
+        }
+      ]
+    },
+    {
+      "text": "it 's somewhat clumsy and too lethargically paced -- but its story about a mysterious creature with psychic abilities offers a solid build-up , a terrific climax , and some nice chills along the way . ",
+      "true_label": 0,
+      "category": "false_positives",
+      "computation_time": 4.145304203033447,
+      "top_positive_words": [
+        {
+          "token": "a ",
+          "value": 0.05746222473680973
+        },
+        {
+          "token": "a ",
+          "value": 0.06443654621640842
+        },
+        {
+          "token": "terrific ",
+          "value": 0.1198882522682349
+        },
+        {
+          "token": "solid ",
+          "value": 0.2194763720035553
+        },
+        {
+          "token": "nice ",
+          "value": 0.22163396494256127
+        }
+      ],
+      "top_negative_words": [
+        {
+          "token": "climax ",
+          "value": -0.0645469290514787
+        },
+        {
+          "token": "and ",
+          "value": -0.0324099680615796
+        },
+        {
+          "token": "way ",
+          "value": -0.03217735348476304
+        },
+        {
+          "token": "it ",
+          "value": -0.024125766940414906
+        },
+        {
+          "token": "its ",
+          "value": -0.018632938154041767
+        }
+      ]
+    }
+  ]
+}

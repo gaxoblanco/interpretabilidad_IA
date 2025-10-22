@@ -1,0 +1,135 @@
+{
+  "high_confidence_correct": {
+    "indices": [
+      808,
+      67,
+      807,
+      170,
+      40
+    ],
+    "count": 5,
+    "texts": [
+      "enormously entertaining for moviegoers of any age . ",
+      "a fast , funny , highly enjoyable movie . ",
+      "just as moving , uplifting and funny as ever . ",
+      "it 's also , clearly , great fun . ",
+      "there 's ... tremendous energy from the cast , a sense of playfulness and excitement that seems appropriate . "
+    ]
+  },
+  "high_confidence_errors": {
+    "indices": [
+      791,
+      544,
+      183,
+      646,
+      93
+    ],
+    "count": 5,
+    "texts": [
+      "it 's somewhat clumsy and too lethargically paced -- but its story about a mysterious creature with psychic abilities offers a solid build-up , a terrific climax , and some nice chills along the way .",
+      "although huppert 's intensity and focus has a raw exhilaration about it , the piano teacher is anything but fun . ",
+      "the lower your expectations , the more you 'll enjoy it . ",
+      "the longer the movie goes , the worse it gets , but it 's actually pretty good in the first few minutes . ",
+      "if steven soderbergh 's ` solaris ' is a failure it is a glorious failure . "
+    ]
+  },
+  "low_confidence_correct": {
+    "indices": [
+      301,
+      847,
+      497,
+      527,
+      643
+    ],
+    "count": 5,
+    "texts": [
+      "the x potion gives the quickly named blossom , bubbles and buttercup supernatural powers that include extraordinary strength and laser-beam eyes , which unfortunately do n't enable them to discern fli",
+      "... mafia , rap stars and hood rats butt their ugly heads in a regurgitation of cinematic violence that gives brutal birth to an unlikely , but likable , hero . ' ",
+      "the overall effect is less like a children 's movie than a recruitment film for future hollywood sellouts . ",
+      "it has all the excitement of eating oatmeal . ",
+      "the jabs it employs are short , carefully placed and dead-center . "
+    ]
+  },
+  "low_confidence_errors": {
+    "indices": [
+      230
+    ],
+    "count": 1,
+    "texts": [
+      "reign of fire looks as if it was made without much thought -- and is best watched that way . "
+    ]
+  },
+  "borderline_cases": {
+    "indices": [
+      301
+    ],
+    "count": 1,
+    "texts": [
+      "the x potion gives the quickly named blossom , bubbles and buttercup supernatural powers that include extraordinary strength and laser-beam eyes , which unfortunately do n't enable them to discern fli"
+    ]
+  },
+  "false_positives": {
+    "indices": [
+      791,
+      544,
+      183,
+      646,
+      519
+    ],
+    "count": 5,
+    "texts": [
+      "it 's somewhat clumsy and too lethargically paced -- but its story about a mysterious creature with psychic abilities offers a solid build-up , a terrific climax , and some nice chills along the way .",
+      "although huppert 's intensity and focus has a raw exhilaration about it , the piano teacher is anything but fun . ",
+      "the lower your expectations , the more you 'll enjoy it . ",
+      "the longer the movie goes , the worse it gets , but it 's actually pretty good in the first few minutes . ",
+      "moretti 's compelling anatomy of grief and the difficult process of adapting to loss . "
+    ]
+  },
+  "false_negatives": {
+    "indices": [
+      93,
+      685,
+      282,
+      87,
+      266
+    ],
+    "count": 5,
+    "texts": [
+      "if steven soderbergh 's ` solaris ' is a failure it is a glorious failure . ",
+      "no screen fantasy-adventure in recent memory has the showmanship of clones ' last 45 minutes . ",
+      "while there 's something intrinsically funny about sir anthony hopkins saying ` get in the car , bitch , ' this jerry bruckheimer production has little else to offer ",
+      "jaglom ... put ( s ) the audience in the privileged position of eavesdropping on his characters ",
+      "a coda in every sense , the pinochet case splits time between a minute-by-minute account of the british court 's extradition chess game and the regime 's talking-head survivors . "
+    ]
+  },
+  "representative_positive": {
+    "indices": [
+      66,
+      200,
+      782,
+      249,
+      697
+    ],
+    "count": 5,
+    "texts": [
+      "if you 're hard up for raunchy college humor , this is your ticket right here . ",
+      "the format gets used best ... to capture the dizzying heights achieved by motocross and bmx riders , whose balletic hotdogging occasionally ends in bone-crushing screwups . ",
+      "the structure the film takes may find matt damon and ben affleck once again looking for residuals as this officially completes a good will hunting trilogy that was never planned . ",
+      "huston nails both the glad-handing and the choking sense of hollow despair . ",
+      "not since tom cruise in risky business has an actor made such a strong impression in his underwear . "
+    ]
+  },
+  "representative_negative": {
+    "indices": [
+      218,
+      733,
+      862
+    ],
+    "count": 3,
+    "texts": [
+      "all that 's missing is the spontaneity , originality and delight . ",
+      "the man from elysian fields is a cold , bliss-less work that groans along thinking itself some important comment on how life throws us some beguiling curves . ",
+      "it 's inoffensive , cheerful , built to inspire the young people , set to an unending soundtrack of beach party pop numbers and aside from its remarkable camerawork and awesome scenery , it 's about a"
+    ]
+  }
+}

@@ -2,6 +2,10 @@
 
 Proyecto educativo del **Módulo II** enfocado en explicar predicciones de modelos Transformer usando **SHAP** y **LIME**.
 
+# Para iniciar el dashboard interactivo:
+```bash
+streamlit run app.py
+```
 ---
 
 ## 🎯 Objetivo del Proyecto
