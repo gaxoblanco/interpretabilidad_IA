@@ -44,10 +44,18 @@ st.markdown("""
 # ============================================================
 
 
-@st.cache_resource
-def load_model():
+# @st.cache_resource
+def load_model(model_number):
     """Carga el modelo y tokenizer con caché"""
-    model_name = "distilbert-base-uncased-finetuned-sst-2-english"
+
+    # Array de opciones de modelos
+    model_options = {
+        1: "distilbert-base-uncased-finetuned-sst-2-english",
+        2: "cardiffnlp/twitter-roberta-base-sentiment",
+        3: "j-hartmann/emotion-english-distilroberta-base",
+        4: "bhadresh-savani/bert-base-uncased-emotion"
+    }
+    model_name = model_options[model_number]
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForSequenceClassification.from_pretrained(model_name)
     model.eval()
@@ -63,9 +71,8 @@ def load_model():
     return model, tokenizer, classifier
 
 
-@st.cache_resource
 def init_explainers(_model, _tokenizer, _classifier):
-    """Inicializa SHAP y LIME con caché"""
+    """Inicializa SHAP y LIME - ahora depende del model_number"""
     # SHAP
     shap_explainer = shap.Explainer(_classifier)
 
@@ -120,11 +127,27 @@ with st.expander("ℹ️ Acerca de este Dashboard", expanded=False):
     - ❌ Resultados estocásticos (pueden variar)
     """)
 
+
 # ============================================================
 # SIDEBAR - CONFIGURACIÓN
 # ============================================================
 with st.sidebar:
     st.header("⚙️ Configuración")
+
+    # Diccionario con las opciones y sus valores asociados
+    model_dict = {
+        "DistilBERT (2 clases: positivo/negativo)": 1,
+        "RoBERTa (3 clases: negativo/neutral/positivo)": 2,
+        "DistilRoBERTa  base (7 emociones)": 3,
+        "BERT Emotion (6 emociones)": 4
+    }
+
+    # Selector de modelos para pasar load_model(model_number)
+    st.subheader("Modelo de Lenguaje")
+    model_choice = st.selectbox(
+        "Seleccionar modelo:", list(model_dict.keys()), index=0)
+    # Obtengo el id del modelo
+    model_number = model_dict[model_choice]
 
     # Método de explicación
     st.subheader("Método de Interpretabilidad")
@@ -172,18 +195,20 @@ with st.sidebar:
 # ÁREA PRINCIPAL
 # ============================================================
 
-# Inicializar modelos si no están en session_state
-if 'model' not in st.session_state:
-    with st.spinner("🚀 Cargando modelo DistilBERT..."):
-        model, tokenizer, classifier = load_model()
+# Verificar si el modelo cambió
+if 'current_model' not in st.session_state or st.session_state.current_model != model_number:
+    with st.spinner(f"🚀 Cargando modelo {model_choice}..."):
+        model, tokenizer, classifier = load_model(model_number)
         st.session_state.model = model
         st.session_state.tokenizer = tokenizer
         st.session_state.classifier = classifier
+        st.session_state.current_model = model_number
 
-        # Inicializar explainers
+        # IMPORTANTE: Recrear los explainers con el NUEVO modelo
         shap_exp, lime_exp = init_explainers(model, tokenizer, classifier)
         st.session_state.shap_explainer = shap_exp
         st.session_state.lime_explainer = lime_exp
+
 
 # Input de texto
 col1, col2 = st.columns([3, 1])
@@ -360,28 +385,72 @@ if analyze_button and input_text:
         tab_shap = tab2 if method == "Ambos (SHAP + LIME)" else tab1
         with tab_shap:
             st.markdown("### Análisis detallado con SHAP")
+            st.markdown("#### Modelo utilizado: " + model_choice)
+            # print del model_number
+            st.markdown(f"#### ID del modelo: {model_number}")
 
             if method == "Solo SHAP":
                 with st.spinner("Calculando SHAP..."):
                     shap_values = st.session_state.shap_explainer([input_text])
 
-            # Waterfall plot
+            # Waterfall plot con manejo robusto según modelo
             st.markdown("#### Contribución Acumulativa")
-            # Detectar si es caso negativo (mayoría de valores negativos)
-            values_for_positive = shap_values[0].values[:, 1]
-            is_positive_case = np.sum(values_for_positive) < 0
 
-            fig, ax = plt.subplots(figsize=(10, 6))
+            try:
+                # Determinar número de clases del modelo
+                num_classes = shap_values[0].values.shape[1] if len(
+                    shap_values[0].values.shape) > 1 else 1
 
-            if is_positive_case:
-                shap.plots.waterfall(
-                    shap_values[0, :, 1], max_display=10, show=False)  # Si cae en negativo, necesita 0
-            else:
-                shap.plots.waterfall(
-                    shap_values[0, :, 0], max_display=10, show=False)
+                # Para modelos de 2 clases (binario)
+                if num_classes == 2:
+                    values_for_positive = shap_values[0].values[:, 1]
+                    is_positive_case = np.sum(values_for_positive) < 0
 
-            st.pyplot(fig)
+                    fig, ax = plt.subplots(figsize=(10, 6))
+                    if is_positive_case:
+                        shap.plots.waterfall(
+                            shap_values[0, :, 1], max_display=10, show=False)
+                    else:
+                        shap.plots.waterfall(
+                            shap_values[0, :, 0], max_display=10, show=False)
+                    st.pyplot(fig)
+                    plt.close()
 
+                # Para modelos multiclase (3+ clases)
+                else:
+                    # Usar gráfico de barras para multiclase
+                    st.info(
+                        f"Modelo con {num_classes} clases - Mostrando importancia promedio")
+
+                    tokens = shap_values[0].data
+                    # Promedio absoluto a través de todas las clases
+                    avg_importance = np.mean(
+                        np.abs(shap_values[0].values), axis=1)
+
+                    # Top 10 tokens
+                    top_indices = np.argsort(avg_importance)[-10:][::-1]
+
+                    fig, ax = plt.subplots(figsize=(10, 6))
+                    top_tokens = [tokens[i] for i in top_indices]
+                    top_values = [avg_importance[i] for i in top_indices]
+
+                    ax.barh(range(len(top_tokens)), top_values,
+                            color='steelblue', alpha=0.7)
+                    ax.set_yticks(range(len(top_tokens)))
+                    ax.set_yticklabels(top_tokens)
+                    ax.set_xlabel('Importancia SHAP Promedio')
+                    ax.set_title(
+                        f'Top 10 Palabras - Modelo {num_classes} clases')
+                    ax.grid(True, alpha=0.3)
+                    plt.tight_layout()
+                    st.pyplot(fig)
+                    plt.close()
+
+            except Exception as e:
+                st.error(f"Error generando gráfico: {str(e)[:200]}")
+                # Fallback simple
+                st.write(
+                    "Valores SHAP calculados pero visualización no disponible para esta configuración")
             # Información adicional
             st.markdown("#### ℹ️ Sobre SHAP")
             st.info("""
