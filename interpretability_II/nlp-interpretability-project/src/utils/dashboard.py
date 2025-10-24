@@ -827,7 +827,7 @@ def mostrar_prediccion_modelo(input_text):
     """
     import streamlit.components.v1 as components
 
-    st.markdown("---")
+    # st.markdown("---")
 
     # Obtener información del modelo y predicción
     prediction = st.session_state.classifier(input_text)[0]
@@ -948,4 +948,4 @@ def mostrar_prediccion_modelo(input_text):
         # Usar components.html en lugar de st.markdown
         components.html(html_content, height=200)
 
-    st.markdown("---")
+    # st.markdown("---")
