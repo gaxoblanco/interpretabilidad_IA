@@ -185,8 +185,13 @@ Ejemplo: `"This movie is absolutely fantastic"`
 - Ambos pueden ser correctos, pero reflejan diferentes perspectivas.
 
 **4.3** ¿Cuándo preferirías SHAP sobre LIME en este proyecto de sentimientos?
+- Segun el modelo podemos tener mas o menos sentimientos.
+- SHAP suele dar predciones más estables y usa el modelo completo. En cambio LIME reproduce el modelo obteniendo una destilación del original.
+- Ambos métodos son complementarios y pueden usarse juntos para obtener una visión más completa del modelo, Suelen tomar palabras diferentes para definir su importancia.
 
 **4.4** ¿Para qué usarás cada uno en tu dashboard final?
+- SHAP: Para mostrar la importancia global de palabras en el dataset y explicar predicciones individuales con rigor. (Mas de análisis riguroso)
+- LIME: Para ofrecer explicaciones rápidas y visuales de predicciones individuales, permitiendo a los usuarios explorar diferentes ejemplos fácilmente. (Mas de estudio exploratorio)
 
 ---
 
