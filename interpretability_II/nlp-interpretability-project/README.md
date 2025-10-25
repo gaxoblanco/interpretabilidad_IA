@@ -1,294 +1,241 @@
-# 🔍 Interpretabilidad en NLP con DistilBERT
+# 🔍 Módulo II - Interpretabilidad en NLP con Transformers
 
-Proyecto educativo del **Módulo II** enfocado en explicar predicciones de modelos Transformer usando **SHAP** y **LIME**.
+Proyecto educativo enfocado en dominar técnicas de interpretabilidad (SHAP y LIME) para modelos de lenguaje natural.
 
-# Para iniciar el dashboard interactivo:
-```bash
-streamlit run app.py
+---
+
+## 📂 Estructura del Proyecto
+
 ```
+interpretability_II/
+│
+├── nlp-interpretability-project/     # 📚 NOTEBOOKS DE APRENDIZAJE
+│   ├── notebooks/
+│   │   ├── 02_model_evaluation.ipynb      # Evaluación del modelo base
+│   │   ├── 03_shap_analysis.ipynb         # Implementación y análisis SHAP
+│   │   └── 04_lime_analysis.ipynb         # Implementación y análisis LIME
+│   │
+│   ├── data/                               # Datasets y cache de modelos
+│   ├── explainability_analysis/            # Resultados de análisis
+│   ├── models_cache/                       # Modelos descargados
+│   ├── results/                            # Outputs de experimentos
+│   └── venv/                               # Entorno virtual local
+│
+└── nlp-interpretability-dashboard/   # 🚀 DASHBOARD DEPLOYADO
+    ├── app.py                              # Aplicación Streamlit principal
+    ├── requirements.txt                    # Dependencias para deployment
+    ├── README.md                           # Documentación del dashboard
+    │
+    └── src/
+        ├── config/
+        │   └── config.yaml                 # Configuración centralizada
+        │
+        ├── models/
+        │   └── model_loader.py             # Carga de modelos Transformer
+        │
+        └── utils/
+            ├── dashboard.py                # Funciones de visualización
+            ├── data_loader.py              # Carga de datos
+            ├── fidelity_explanation.py     # Validación de explicaciones
+            └── [otros módulos]
+```
+
 ---
 
 ## 🎯 Objetivo del Proyecto
 
-Implementar y comparar dos técnicas de interpretabilidad (SHAP y LIME) para explicar las predicciones de un modelo **DistilBERT** en la tarea de **análisis de sentimientos**.
-
-### Pregunta Central
-> **"Para este modelo de sentimientos, ¿qué método (SHAP o LIME) me da explicaciones más útiles y en qué situaciones?"**
+Responder la pregunta:
+> **"¿Qué método de interpretabilidad (SHAP o LIME) proporciona explicaciones más útiles para modelos Transformer en análisis de sentimientos, y en qué situaciones usar cada uno?"**
 
 ---
 
-## 📊 Dataset
+## 📊 Componentes del Proyecto
 
-- **Fuente:** IMDb Movie Reviews (HuggingFace Datasets)
-- **Tarea:** Clasificación binaria de sentimientos (Positivo/Negativo)
-- **Tamaño:** 50,000 reviews (25k train / 25k test)
-- **Promedio de palabras por review:** ~230 tokens
+### 1️⃣ **Notebooks de Aprendizaje** (`nlp-interpretability-project/`)
+
+Notebooks Jupyter donde se implementaron y probaron las técnicas:
+
+#### **02_model_evaluation.ipynb**
+- Carga y evaluación de DistilBERT pre-entrenado
+- Métricas: Accuracy, Precision, Recall, F1-Score
+- Análisis de errores y casos extremos
+- Dataset: SST-2 (Stanford Sentiment Treebank)
+
+#### **03_shap_analysis.ipynb**
+- Implementación de SHAP para transformers
+- Cálculo de valores de Shapley para tokens
+- Visualizaciones: waterfall plots, force plots
+- Análisis de importancia global de palabras
+
+#### **04_lime_analysis.ipynb**
+- Implementación de LIME para texto
+- Configuración de perturbaciones locales
+- Comparación de estabilidad entre ejecuciones
+- Trade-offs: velocidad vs precisión
 
 ---
 
-## 🧠 Modelo Base
+### 2️⃣ **Dashboard Interactivo** (`nlp-interpretability-dashboard/`)
 
-**DistilBERT** (`distilbert-base-uncased-finetuned-sst-2-english`)
-- Versión destilada de BERT (66% menos parámetros)
-- Pre-entrenado en SST-2 (Stanford Sentiment Treebank)
-- **Arquitectura:**
-  - 6 capas Transformer
-  - 12 attention heads por capa
-  - 768 dimensiones de embedding
-  - 66M parámetros totales
+Aplicación Streamlit deployada en Hugging Face Spaces.
 
-**Métricas esperadas en IMDb:**
-- Accuracy: ~91-93%
-- F1-Score: ~0.92
+**🔗 Demo en vivo:** [https://huggingface.co/spaces/gaxoblanco/nlp-interpretability-dashboard](https://huggingface.co/spaces/gaxoblanco/nlp-interpretability-dashboard)
+
+#### **Funcionalidades:**
+
+**Modelos disponibles:**
+- DistilBERT (sentimientos binarios)
+- RoBERTa (sentimientos binarios)
+- DistilRoBERTa (6 emociones)
+- BERT Emotion (6 emociones)
+
+**Métodos de explicación:**
+- Solo SHAP
+- Solo LIME
+- Ambos (comparación lado a lado)
+
+**Visualizaciones:**
+- Predicción con confianza
+- Importancia de palabras por método
+- Comparación SHAP vs LIME
+- Métricas de validación (fidelidad, correlación)
+
+**Casos de uso:**
+- Input personalizado del usuario
+- 5 ejemplos predefinidos (positivo, negativo, mixto, sarcástico, neutral)
 
 ---
 
 ## 🛠️ Stack Tecnológico
 
+### Core ML
 ```
-Python 3.9+
-transformers 4.30.0    # HuggingFace Transformers
-torch 2.0.0            # PyTorch
-datasets 2.12.0        # HuggingFace Datasets
-shap 0.42.0            # SHAP explainer
-lime 0.2.0.1           # LIME explainer
-streamlit 1.22.0       # Dashboard interactivo
-pandas 2.0.0           # Manipulación de datos
-matplotlib 3.7.0       # Visualizaciones
-scikit-learn 1.2.0     # Métricas y utilidades
+transformers==4.30.0    # HuggingFace Transformers
+torch==2.0.0            # PyTorch backend
+datasets==2.18.0        # Datasets de HuggingFace
 ```
 
----
-
-## 📁 Estructura del Proyecto
-
+### Interpretabilidad
 ```
-nlp-interpretability-project/
-│
-├── src/
-│   ├── models/
-│   │   └── model_loader.py          # Carga y predicción con DistilBERT
-│   │
-│   ├── interpretability/
-│   │   ├── shap_analyzer.py         # Explicaciones SHAP
-│   │   └── lime_analyzer.py         # Explicaciones LIME
-│   │
-│   ├── utils/
-│   │   ├── data_loader.py           # Carga del dataset IMDb
-│   │   └── text_preprocessor.py     # Preprocesamiento de texto
-│   │
-│   ├── visualization/
-│   │   └── text_viz.py              # Visualizaciones de explicaciones
-│   │
-│   └── config/
-│       └── config.yaml              # Configuraciones centralizadas
-│
-├── notebooks/
-│   ├── 01_shap_lime_toy_example.ipynb     # Ejemplo toy (datos tabulares)
-│   ├── 02_model_evaluation.ipynb          # Evaluación del modelo base
-│   ├── 03_shap_analysis.ipynb             # Análisis con SHAP
-│   ├── 04_lime_analysis.ipynb             # Análisis con LIME
-│   ├── 05_visualization.ipynb             # Galería de visualizaciones
-│   └── 06_validation.ipynb                # Métricas de validación
-│
-├── docs/
-│   ├── fundamentos.md                     # Conceptos teóricos respondidos
-│   └── LEARNINGS.md                       # Insights finales del proyecto
-│
-├── data/
-│   └── cache/                             # Cache de modelos y datasets
-│
-├── app.py                                 # Dashboard Streamlit
-├── requirements.txt
-├── .gitignore
-└── README.md
+shap==0.42.0            # SHAP explainer
+lime==0.2.0.1           # LIME explainer
 ```
 
-## 📖 Uso Básico
-
-### Predicción Simple
-
-```python
-from src.models.model_loader import ModelLoader
-
-# Cargar modelo
-model = ModelLoader(model_name="distilbert-base-uncased-finetuned-sst-2-english")
-
-# Predecir sentimiento
-text = "This movie was absolutely fantastic!"
-result = model.predict(text)
-
-print(f"Predicción: {result['predictions'][0]}")  # 'POSITIVE'
-print(f"Confianza: {result['probabilities'][0]:.2%}")  # 98.5%
+### Visualización & Dashboard
+```
+streamlit==1.22.0       # Framework del dashboard
+matplotlib==3.7.1       # Visualizaciones básicas
+seaborn==0.12.2         # Visualizaciones estadísticas
+plotly==5.14.1          # Gráficos interactivos
 ```
 
-### Explicar con SHAP
-
-```python
-from src.interpretability.shap_analyzer import SHAPAnalyzer
-
-# Inicializar analizador
-shap_analyzer = SHAPAnalyzer(model.model, model.tokenizer)
-
-# Obtener explicación
-explanation = shap_analyzer.explain_instance(text)
-
-# Visualizar
-shap_analyzer.plot_waterfall(explanation)
+### Data Science
 ```
-
-### Explicar con LIME
-
-```python
-from src.interpretability.lime_analyzer import LIMEAnalyzer
-
-# Inicializar analizador
-lime_analyzer = LIMEAnalyzer(model.model, model.tokenizer)
-
-# Obtener explicación
-explanation = lime_analyzer.explain_instance(text, num_features=10)
-
-# Visualizar
-lime_analyzer.plot_explanation(explanation)
+pandas==2.0.3           # Manipulación de datos
+numpy==1.24.3           # Operaciones numéricas
+scikit-learn==1.2.2     # Métricas y utilidades
 ```
 
 ---
 
-## 🎨 Dashboard Interactivo
+## 🚀 Inicio Rápido
 
-Ejecutar la aplicación Streamlit:
+### **Opción 1: Probar el Dashboard Online** (Recomendado)
+
+Visita directamente: [https://huggingface.co/spaces/gaxoblanco/nlp-interpretability-dashboard](https://huggingface.co/spaces/gaxoblanco/nlp-interpretability-dashboard)
+
+---
+
+### **Opción 2: Ejecutar Localmente**
+
+#### **A) Dashboard Interactivo**
 
 ```bash
+# 1. Clonar el repositorio
+git clone [tu-repo]
+cd interpretability_II/nlp-interpretability-dashboard
+
+# 2. Crear entorno virtual
+python -m venv venv
+source venv/bin/activate  # En Windows: venv\Scripts\activate
+
+# 3. Instalar dependencias
+pip install -r requirements.txt
+
+# 4. Ejecutar dashboard
 streamlit run app.py
 ```
 
-Funcionalidades:
-- ✍️ Ingresar texto personalizado para análisis
-- 🔮 Ver predicción y probabilidades
-- 📊 Comparar explicaciones SHAP vs LIME lado a lado
-- 🎯 Identificar palabras más influyentes
-- 📈 Visualizar importancia global de tokens
+El dashboard abrirá en: `http://localhost:8501`
 
 ---
 
-## 📚 Roadmap de Desarrollo (7 Semanas)
+#### **B) Notebooks de Aprendizaje**
 
-| Semana | Objetivo | Entregable |
-|--------|----------|------------|
-| **1** | Fundamentos teóricos | `docs/fundamentos.md` |
-| **2** | Teoría SHAP/LIME | `notebooks/01_toy_example.ipynb` |
-| **3** | Setup del proyecto | `src/models/` + evaluación base |
-| **4** | Implementación SHAP | `src/interpretability/shap_analyzer.py` |
-| **5** | Implementación LIME | `src/interpretability/lime_analyzer.py` |
-| **6** | Visualización | `app.py` (Dashboard) |
-| **7** | Validación y análisis | `LEARNINGS.md` |
+```bash
+# 1. Ir a la carpeta de notebooks
+cd interpretability_II/nlp-interpretability-project
 
----
+# 2. Activar entorno virtual
+source venv/bin/activate
 
-## 🔬 Metodología de Comparación
+# 3. Lanzar Jupyter
+jupyter notebook
 
-### Métricas de Evaluación
-
-1. **Fidelidad**: ¿Las explicaciones reflejan fielmente el modelo?
-2. **Estabilidad**: ¿Explicaciones consistentes para textos similares?
-3. **Eficiencia**: Tiempo de cómputo por explicación
-4. **Interpretabilidad**: Facilidad de comprensión humana
-
-### Casos de Estudio
-
-Analizaremos 10 casos que incluyen:
-- Sentimientos claramente positivos/negativos
-- Casos ambiguos o sarcásticos
-- Textos largos vs cortos
-- Acuerdo y desacuerdo entre SHAP y LIME
+# 4. Abrir cualquier notebook:
+#    - 02_model_evaluation.ipynb
+#    - 03_shap_analysis.ipynb
+#    - 04_lime_analysis.ipynb
+```
 
 ---
 
-## 🎓 Conceptos Clave Aprendidos
+## 📚 Roadmap de Desarrollo (Completado)
 
-### SHAP (SHapley Additive exPlanations)
-- Base en teoría de juegos (valores de Shapley)
-- Garantías matemáticas formales
-- Explicaciones globales + locales
-- Más lento pero más riguroso
+| Semana | Objetivo | Entregable | Estado |
+|--------|----------|------------|--------|
+| **1-2** | Fundamentos teóricos | Documentación conceptual | ✅ |
+| **3** | Setup y evaluación | `02_model_evaluation.ipynb` | ✅ |
+| **4** | Implementación SHAP | `03_shap_analysis.ipynb` | ✅ |
+| **5** | Implementación LIME | `04_lime_analysis.ipynb` | ✅ |
+| **6** | Dashboard | `app.py` deployado | ✅ |
+| **7** | Validación | Métricas de fidelidad | ✅ |
 
-### LIME (Local Interpretable Model-agnostic Explanations)
-- Aproximación lineal local
-- Basado en perturbaciones del input
-- Solo explicaciones locales
-- Más rápido pero estocástico
-
-### Transformers
-- Mecanismo de self-attention
-- Positional embeddings
-- Multi-head attention
-- Fine-tuning de modelos pre-entrenados
 
 ---
 
-## ⚠️ Limitaciones Conocidas
+## 🎓 Aprendizajes Clave
 
-1. **SHAP en texto es lento**: ~30-60 seg por explicación
-2. **LIME es estocástico**: Resultados varían entre ejecuciones
-3. **Contexto limitado**: DistilBERT tiene límite de 512 tokens
-4. **Masking vs Removal**: Diferentes estrategias de perturbación
-5. **OOD (Out-of-distribution)**: Perturbaciones pueden crear textos irreales
+### **SHAP vs LIME: ¿Cuándo usar cada uno?**
 
----
+#### **Usa SHAP cuando:**
+- ✅ Necesitas garantías matemáticas formales
+- ✅ Quieres explicaciones globales (todo el dataset)
+- ✅ Importa más la precisión que la velocidad
+- ✅ Necesitas consistencia perfecta entre ejecuciones
 
-## 📝 Resultados Esperados
+#### **Usa LIME cuando:**
+- ✅ Necesitas explicaciones rápidas (producción)
+- ✅ Solo te interesan explicaciones locales (instancia específica)
+- ✅ Quieres explorar múltiples perturbaciones
+- ✅ El modelo es completamente black-box
 
-Al finalizar el proyecto, serás capaz de:
-- ✅ Explicar predicciones de cualquier modelo Transformer
-- ✅ Identificar qué palabras influyen más en las decisiones
-- ✅ Comparar ventajas/desventajas de SHAP vs LIME
-- ✅ Crear visualizaciones interpretables
-- ✅ Validar calidad de explicaciones
-
----
-
-## 🔗 Referencias
-
-### Papers Fundamentales
-- [Attention is All You Need](https://arxiv.org/abs/1706.03762) - Vaswani et al. (2017)
-- [LIME Paper](https://arxiv.org/abs/1602.04938) - Ribeiro et al. (2016)
-- [SHAP Paper](https://arxiv.org/abs/1705.07874) - Lundberg & Lee (2017)
-- [DistilBERT Paper](https://arxiv.org/abs/1910.01108) - Sanh et al. (2019)
-
-### Recursos Adicionales
-- [The Illustrated Transformer](http://jalammar.github.io/illustrated-transformer/)
-- [HuggingFace Course](https://huggingface.co/course)
-- [SHAP Documentation](https://shap.readthedocs.io/)
-- [LIME Documentation](https://lime-ml.readthedocs.io/)
+#### **Usa ambos cuando:**
+- ✅ Quieres validar cruzada de explicaciones
+- ✅ Estás en fase de research/análisis
+- ✅ Necesitas detectar artefactos del método
 
 ---
 
 ## 👨‍💻 Autor
 
-Proyecto educativo del **Módulo II: Interpretabilidad en NLP**
-
+**Proyecto Educativo - Módulo II**
+- Plan de estudio en interpretabilidad de ML
+- Desarrollado por Gaston Blanco
 ---
 
 ## 📄 Licencia
 
 MIT License - Proyecto educativo de código abierto
-
----
-
-## 🤝 Contribuciones
-
-Este es un proyecto educativo. Si encuentras errores o tienes sugerencias:
-1. Abre un Issue describiendo el problema
-2. Propón mejoras mediante Pull Requests
-3. Comparte tus propios experimentos
-
----
-
-## ⏭️ Próximos Pasos (Módulo III)
-
-- Interpretabilidad en modelos generativos (GPT)
-- Attention visualization
-- Probing tasks
-- Adversarial examples
 
 ---
