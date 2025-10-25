@@ -200,12 +200,21 @@ Ejemplo: `"This movie is absolutely fantastic"`
 ### Métricas que Implementarás
 
 **5.1** ¿Qué es **fidelidad** de una explicación? Describe cómo la medirás en código.
+- Fidelidad mide qué tan bien una explicación refleja el resultado del modelo (este caso trabajamos con emociones).
+- Esta muy ligado al modelo original, y se mide usando la teoria de juegos de shapley.
+- De momento entiendo que es un campo muy nuevo, por lo opte por implementar mi Validación de explicaciones usando la métricas.
 
 **5.2** Propón un test simple: Si elimino la palabra más importante según SHAP, ¿qué debería pasar?
+- Es interesante, pero si elimino la "palabra"(token), con mayor SHAP value positivo, no necesariamente cambie la predicción a negativa, ya que va a depender del tokenizador.
+- Sin embargo, esto se resuelve definiendo "eliminar" y "palabra" correctamente. Si "eliminar" significa reemplazar el token con `[MASK]` o con una palabra aleatorea, y "palabra" se refiere al conjunto de tokens que forman la "palabra", entonces al hacer esto, deberíamos observar una disminución significativa en la probabilidad de la clase positiva.
 
 **5.3** ¿Cómo medirías si SHAP y LIME "están de acuerdo" en un ejemplo?
+- Las comparo una al lado de la otra obvio... pero lo mas probable es que sean similares, por ello estarian de acuerdo. Una comparacion ya requiere Spearman. 
+- Calculo la correlación de Spearman entre los rankings de importancia de palabras dados por SHAP y LIME. Una alta correlación indicaría que ambos métodos están de acuerdo en qué palabras son más importantes para esa predicción.
 
 **5.4** ¿Qué experimento harías para verificar que no están dando explicaciones aleatorias?
+- Como tengo backgorund en Diseno Indsutrial. 
+- Un dashboard interactivo donde el usuario pueda ejecutar los mas rapido y facil multiples explicaciones en diferentes ejemplos y comparar los resultados visualmente, tanto de models distintos como de metodos distintos (SHAP vs LIME) y visualiar el impacto de cada palabra en la prediccion. Facilitando re escribir la oracion y ver como cambian las explicaciones.
 
 ---
 
@@ -214,23 +223,30 @@ Ejemplo: `"This movie is absolutely fantastic"`
 ### Tu Stack Técnico
 
 **6.1** ¿Qué librería usarás para cargar DistilBERT? (nombre exacto)
+- Transformers
+** Usamos HuggingFace Transformers**: `from transformers import DistilBertTokenizer, DistilBertForSequenceClassification`
 
 **6.2** ¿Qué dataset de HuggingFace usarás? ¿Cuántos ejemplos?
-
-**6.3** Lista las 3 clases principales que implementarás:
-   - `ModelLoader`: ¿Qué hace?
-   - `SHAPAnalyzer`: ¿Qué hace?
-   - `LIMEAnalyzer`: ¿Qué hace?
-
+- Usaremos el dataset `SST-2` (Stanford Sentiment Treebank) de HuggingFace,.
+- En el dashboard trabaja con textos de entrada manual del usuario y 5 ejemplos predefinidos.
 ---
 
 ### Visualizaciones
 
 **6.4** Describe 2 visualizaciones que crearás:
-   - Para SHAP: ?
-   - Para LIME: ?
+   - Para SHAP: 
+        - Gráfico de barras horizontales mostrando las palabras más importantes con sus SHAP values para una predicción específica.
+        - Gráfico de resumen (summary plot) que muestre la importancia global de las palabras en el dataset.
+   - Para LIME: 
+        - Gráfico de barras horizontales similar al de SHAP, pero mostrando las palabras más importantes según LIME para una predicción específica.
+        - Listado de palabras resaltadas en el texto original, coloreadas según su importancia (positiva o negativa) según LIME.
 
 **6.5** En tu dashboard Streamlit, ¿qué podrá hacer el usuario?
+- Ingresar su propio texto para análisis de sentimientos.
+- Seleccionar el modelo DistilBERT, RoBERTa, DistilRoBERTa y BERT Emotion.
+- Ver explicaciones SHAP y LIME para su texto.
+- Ver una comparacion entre SHAP y LIME.
+- Ver una validación de explicaciones basada en fidelidad y correlación.
 
 ---
 
