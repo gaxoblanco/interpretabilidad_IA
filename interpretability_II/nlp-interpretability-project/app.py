@@ -4,6 +4,7 @@ Comparación interactiva de SHAP vs LIME para análisis de sentimientos
 """
 
 from src.utils.dashboard import comparar_shap_lime, get_model_info, mostrar_prediccion_modelo, visualizar_lime, visualizar_shap
+from src.utils.fidelity_explanation import mostrar_validacion_explicaciones
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -278,7 +279,7 @@ if analyze_button and input_text:
 
     # Mostrar predicción
     st.markdown("---")
-    col1, col2, col3 = st.columns([1, 2, 1])
+    col1, col2, col3, col4 = st.columns([1, 2, 1, 2])
 
     mostrar_prediccion_modelo(input_text)
 
@@ -286,11 +287,16 @@ if analyze_button and input_text:
 
     # Tabs para explicaciones
     if method == "Ambos (SHAP + LIME)":
-        tab1, tab2, tab3 = st.tabs(["📊 Comparación", "🔷 SHAP", "🔶 LIME"])
+        tab1, tab2, tab3, tab4 = st.tabs([
+            "📊 Comparación",
+            "🔷 SHAP",
+            "🔶 LIME",
+            "⚖️ Validación"
+        ])
     elif method == "Solo SHAP":
-        tab1 = st.tabs(["🔷 SHAP"])[0]
+        tab1, tab2 = st.tabs(["🔷 SHAP", "⚖️ Validación"])
     else:
-        tab1 = st.tabs(["🔶 LIME"])[0]
+        tab1, tab2 = st.tabs(["🔶 LIME", "⚖️ Validación"])
 
     # ============================================================
     # TAB COMPARATIVO
@@ -304,6 +310,8 @@ if analyze_button and input_text:
                 num_features_lime=num_features_lime,
                 num_samples_lime=num_samples_lime
             )
+            st.session_state.current_shap_values = shap_values
+            st.session_state.current_lime_explanation = lime_explanation
 
     # ============================================================
     # TAB SHAP SOLO
@@ -315,6 +323,7 @@ if analyze_button and input_text:
             if method == "Solo SHAP":
                 with st.spinner("Calculando SHAP..."):
                     shap_values = st.session_state.shap_explainer([input_text])
+                    st.session_state.current_shap_values = shap_values
 
             # Llamar a la función de visualización
             visualizar_shap(
@@ -325,6 +334,7 @@ if analyze_button and input_text:
                 method=method,
                 num_features=num_features_lime
             )
+
     # ============================================================
     # TAB LIME SOLO
     # ============================================================
@@ -340,12 +350,47 @@ if analyze_button and input_text:
                         num_features=num_features_lime,
                         num_samples=num_samples_lime
                     )
+                    st.session_state.current_lime_explanation = lime_explanation
 
             # Llamar a la función de visualización
             visualizar_lime(
                 lime_explanation=lime_explanation,
                 num_features_lime=num_features_lime
             )
+
+    # ============================================================
+    # TAB VALIDACIÓN (para todos los métodos)
+    # ============================================================
+    if method == "Ambos (SHAP + LIME)":
+        with tab4:  # Pestaña de validación cuando hay ambos
+            if 'shap_values' in locals() and 'lime_explanation' in locals():
+                mostrar_validacion_explicaciones(
+                    input_text,
+                    getattr(st.session_state, 'current_shap_values', None),
+                    getattr(st.session_state, 'current_lime_explanation', None),
+                    method
+                )
+            else:
+                st.warning(
+                    "⚠️ Ejecuta primero el análisis para ver métricas de validación")
+
+    elif method == "Solo SHAP":
+        with tab2:  # Pestaña de validación para SHAP solo
+            if 'shap_values' in locals():
+                mostrar_validacion_explicaciones(
+                    input_text, shap_values, None, method
+                )
+            else:
+                st.warning("⚠️ Ejecuta primero el análisis SHAP")
+
+    elif method == "Solo LIME":  # Cambié "else" por "elif method == 'Solo LIME'"
+        with tab2:  # Pestaña de validación para LIME solo
+            if 'lime_explanation' in locals():
+                mostrar_validacion_explicaciones(
+                    input_text, None, lime_explanation, method
+                )
+            else:
+                st.warning("⚠️ Ejecuta primero el análisis LIME")
 # ============================================================
 # FOOTER
 # ============================================================
