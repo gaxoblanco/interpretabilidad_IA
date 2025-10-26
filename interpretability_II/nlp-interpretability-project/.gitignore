@@ -225,6 +225,8 @@ shap_cache/
 .ipynb_checkpoints/
 */.ipynb_checkpoints/
 
+models_cache/
+explainability_analysis/
 # ----------------------------------------------------------------------------
 # VISUALIZACIONES Y RESULTADOS
 # ----------------------------------------------------------------------------

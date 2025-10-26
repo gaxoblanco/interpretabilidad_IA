@@ -1,0 +1,5 @@
+# ignoro la carpeta models archivos png, csv , pkl y txt
+models/*.png
+*.csv
+*.pkl
+*.txt
