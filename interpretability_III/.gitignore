@@ -1,17 +1,25 @@
-# ============================================================================
-# .GITIGNORE - Proyecto Interpretabilidad NLP
-# Módulo II: DistilBERT + SHAP + LIME
-# ============================================================================
+# ============================================
+# .gitignore para interpretability_I
+# Proyecto: German Credit - Interpretabilidad
+# ============================================
 
-# ----------------------------------------------------------------------------
-# PYTHON BÁSICO
-# ----------------------------------------------------------------------------
-# Byte-compiled / optimized / DLL files
+# ============================================
+# ENTORNOS VIRTUALES
+# ============================================
+env/
+venv_III/
+ENV/
+env.bak/
+venv_III.bak/
+*.venv_III
+
+# ============================================
+# PYTHON
+# ============================================
+# Bytecode
 __pycache__/
 *.py[cod]
 *$py.class
-
-# C extensions
 *.so
 
 # Distribution / packaging
@@ -28,396 +36,148 @@ parts/
 sdist/
 var/
 wheels/
-share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
 
 # PyInstaller
 *.manifest
 *.spec
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
+# Unit test / coverage
 htmlcov/
 .tox/
-.nox/
 .coverage
 .coverage.*
 .cache
 nosetests.xml
 coverage.xml
 *.cover
-*.py,cover
 .hypothesis/
 .pytest_cache/
-cover/
 
-# Translations
-*.mo
-*.pot
-
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-.pybuilder/
-target/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-*/.ipynb_checkpoints/*
-
-# IPython
-profile_default/
-ipython_config.py
-
-# pyenv
-.python-version
-
-# pipenv
-Pipfile.lock
-
-# poetry
-poetry.lock
-
-# pdm
-.pdm.toml
-
-# PEP 582
-__pypackages__/
-
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
-
-# SageMath parsed files
-*.sage.py
-
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pyre type checker
-.pyre/
-
-# pytype static type analyzer
-.pytype/
-
-# Cython debug symbols
-cython_debug/
-
-# ----------------------------------------------------------------------------
-# HUGGINGFACE & TRANSFORMERS
-# ----------------------------------------------------------------------------
-# Modelos pre-entrenados descargados (pueden ser GB de tamaño)
-data/cache/
-data/models/
-models/
-*.bin
-*.safetensors
-*.h5
-*.ckpt
-*.pth
-*.pt
-
-# HuggingFace cache (puede ser MUY grande)
-.cache/huggingface/
-~/.cache/huggingface/
-transformers_cache/
-hub/
-
-# Tokenizers cache
-tokenizers/
-
-# ----------------------------------------------------------------------------
-# DATASETS
-# ----------------------------------------------------------------------------
-# Datasets descargados (IMDb puede ser ~80MB)
-data/raw/
-data/processed/
-datasets/
-*.arrow
-*.csv.gz
-*.json.gz
-*.parquet
-
-# Archivos temporales de datasets
-data/tmp/
-data/temp/
-
-# ----------------------------------------------------------------------------
-# MACHINE LEARNING ARTIFACTS
-# ----------------------------------------------------------------------------
-# Checkpoints de entrenamiento
-checkpoints/
-lightning_logs/
-runs/
-outputs/
-wandb/
-
-# TensorBoard logs
-logs/
-tensorboard/
-tb_logs/
-
-# MLflow
-mlruns/
-
-# Weights & Biases
-wandb/
-
-# Saved models (tus propios modelos fine-tuneados)
-saved_models/
-*.model
-*.pkl
-*.pickle
-
-# SHAP explainer cache (puede ser grande)
-shap_cache/
-.shap_cache/
-
-# ----------------------------------------------------------------------------
-# NOTEBOOKS
-# ----------------------------------------------------------------------------
-# Jupyter Notebook outputs (para mantener notebooks limpios)
-# *.ipynb
-!notebooks/*.ipynb  # Pero SÍ incluir los notebooks principales
-
-# Jupyter temporales
+# ============================================
+# JUPYTER NOTEBOOK
+# ============================================
 .ipynb_checkpoints/
-*/.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+*.ipynb_checkpoints
 
-models_cache/
-explainability_analysis/
-# ----------------------------------------------------------------------------
-# VISUALIZACIONES Y RESULTADOS
-# ----------------------------------------------------------------------------
-# Gráficos generados (regenerables)
-plots/
-figures/
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.svg
-!docs/images/*.png  # Pero SÍ incluir imágenes de documentación
+# Jupyter Notebook config
+.jupyter/
 
-# Resultados de experimentos (pueden ser grandes)
-results/
-experiments/
-outputs/
+# ============================================
+# DATOS (Opcional - descomentar si no quieres subir datos)
+# ============================================
+# Descomentar estas líneas si tus datos son muy grandes
+# o contienen información sensible
 
-# ----------------------------------------------------------------------------
-# STREAMLIT
-# ----------------------------------------------------------------------------
-# Streamlit cache
-.streamlit/
-streamlit_cache/
+# data/*.csv
+# data/*.data
+# data/*.txt
+# data/raw/*
+# data/processed/*
 
-# ----------------------------------------------------------------------------
-# SISTEMA OPERATIVO
-# ----------------------------------------------------------------------------
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-Icon
-._*
-.DocumentRevisions-V100
-.fseventsd
-.Spotlight-V100
-.TemporaryItems
-.Trashes
-.VolumeIcon.icns
-.com.apple.timemachine.donotpresent
-.AppleDB
-.AppleDesktop
-Network Trash Folder
-Temporary Items
-.apdisk
+# Mantener la estructura de carpetas
+!data/.gitkeep
 
-# Windows
-Thumbs.db
-Thumbs.db:encryptable
-ehthumbs.db
-ehthumbs_vista.db
-*.stackdump
-[Dd]esktop.ini
-$RECYCLE.BIN/
-*.cab
-*.msi
-*.msix
-*.msm
-*.msp
-*.lnk
+# ============================================
+# MODELOS ENTRENADOS
+# ============================================
+# Modelos pueden ser grandes, no subirlos a Git
+models/*.pkl
+models/*.joblib
+models/*.h5
+models/*.pt
+models/*.pth
+models/*.ckpt
 
-# Linux
-*~
-.fuse_hidden*
-.directory
-.Trash-*
-.nfs*
+# Mantener la carpeta
+!models/.gitkeep
 
-# ----------------------------------------------------------------------------
-# IDEs Y EDITORES
-# ----------------------------------------------------------------------------
+# ============================================
+# VISUALIZACIONES GENERADAS
+# ============================================
+# Descomentar si generas muchas imágenes temporales
+# figures/*.png
+# figures/*.jpg
+# figures/*.pdf
+
+# ============================================
+# LOGS
+# ============================================
+*.log
+logs/
+*.out
+
+# ============================================
+# IDE / EDITORES
+# ============================================
 # VSCode
 .vscode/
 *.code-workspace
-.history/
 
 # PyCharm
 .idea/
 *.iml
 *.iws
-*.ipr
-out/
 
 # Sublime Text
-*.tmlanguage.cache
-*.tmPreferences.cache
-*.stTheme.cache
-*.sublime-workspace
 *.sublime-project
+*.sublime-workspace
+
+# Spyder
+.spyderproject
+.spyproject
 
 # Vim
-[._]*.s[a-v][a-z]
-[._]*.sw[a-p]
-[._]s[a-rt-v][a-z]
-[._]ss[a-gi-z]
-[._]sw[a-p]
-Session.vim
-Sessionx.vim
-.netrwhist
+*.swp
+*.swo
 *~
-tags
-[._]*.un~
 
 # Emacs
 *~
 \#*\#
-/.emacs.desktop
-/.emacs.desktop.lock
-*.elc
-auto-save-list
-tramp
 .\#*
 
-# ----------------------------------------------------------------------------
-# CONFIGURACIONES PRIVADAS
-# ----------------------------------------------------------------------------
-# Variables de entorno con secrets
-.env
-.env.local
-.env.*.local
-*.env
+# ============================================
+# SISTEMA OPERATIVO
+# ============================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
 
-# Configuraciones privadas (API keys, tokens)
-config/secrets.yaml
-config/private.yaml
-secrets/
-credentials/
-*.key
-*.pem
-*.cert
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
 
-# ----------------------------------------------------------------------------
-# TEMPORAL Y BACKUP
-# ----------------------------------------------------------------------------
-# Archivos temporales
-tmp/
-temp/
-*.tmp
-*.temp
-*.swp
-*.swo
-*.bak
-*.backup
+# Linux
 *~
 
-# Locks
-*.lock
+# ============================================
+# OTROS
+# ============================================
+# Archivos temporales
+*.tmp
+*.temp
+*.bak
+*.swp
 
-# Logs generales
-*.log
-logs/
+# Archivos de configuración local
+.env
+.env.local
+config.local.py
 
-# ----------------------------------------------------------------------------
-# ARCHIVOS GRANDES (Git LFS candidatos)
-# ----------------------------------------------------------------------------
-# Si decides NO usar Git LFS, excluye estos:
+# Archivos comprimidos
 *.zip
-*.tar
 *.tar.gz
 *.rar
-*.7z
 
-# Archivos de datos grandes
-*.hdf5
-*.h5
-*.npy
-*.npz
-
-# ----------------------------------------------------------------------------
-# PROYECTO ESPECÍFICO
-# ----------------------------------------------------------------------------
-# Tus propios experimentos temporales
-sandbox/
-experiments/
-scratch/
-test_*.py
-debug_*.py
-
-# Archivos de análisis temporal
-analysis_temp/
-explore_*.ipynb
-
-# Reportes generados (PDF/HTML pueden regenerarse)
-reports/*.html
-reports/*.pdf
-
-# ============================================================================
-# ARCHIVOS QUE SÍ DEBEN INCLUIRSE (excepciones explícitas)
-# ============================================================================
-# !data/sample/example.csv           # Datos de ejemplo pequeños
-# !models/config.json                # Configuraciones de modelo
-# !docs/images/*.png                 # Imágenes de documentación
-# !notebooks/*.ipynb                 # Notebooks principales
+# Documentos temporales
+*.aux
+*.out
+*.toc
