@@ -64,28 +64,13 @@ class FidelityMetrics:
 
         return predicted_class, predicted_prob
 
-    def _process_lime_values(self, importance_values: np.ndarray) -> np.ndarray:
-        """
-        Procesa valores LIME para cálculo de fidelity.
-        LIME usa negativos para palabras que reducen la probabilidad.
-        Para fidelity, usamos magnitud (valor absoluto).
-        """
-        return np.abs(importance_values)
-
     def compute_fidelity_removal(self, text: str, importance_values: np.ndarray,
                                  top_k: int = 5, method: str = 'shap') -> float:
         """
         Calcula fidelidad eliminando las top-k palabras más importantes
         Usa Comprehensiveness: mide cuánto baja la prob de la clase ORIGINAL
-
-        Args:
-            text: Texto original
-            importance_values: Array con importancias de cada token
-            top_k: Número de tokens más importantes a eliminar
-            method: 'shap' o 'lime' - determina procesamiento de valores
-        Returns:
-            float: Score de fidelidad (0-1, mayor es mejor)
         """
+
         # Predicción original
         original_class, original_prob = self.predict_single(text)
 
@@ -94,7 +79,7 @@ class FidelityMetrics:
 
         # Validar que tenemos suficientes tokens
         if len(tokens) <= top_k:
-            return 1.0  # Si eliminamos todo, asumimos máximo cambio
+            return 1.0
 
         # Ajustar si hay diferencia de longitud
         if len(importance_values) != len(tokens):
@@ -103,10 +88,11 @@ class FidelityMetrics:
             tokens = tokens[:min_len]
 
         if method.lower() == 'lime':
-            processed_values = self._process_lime_values(importance_values)
+            processed_values = np.abs(importance_values)
         else:
             processed_values = np.abs(importance_values)
 
+        # Ya viene filtrado desde extraer_valores_shap_por_modelo
         # Obtener índices de las k palabras más importantes
         top_indices = np.argsort(processed_values)[-top_k:]
 
@@ -122,7 +108,6 @@ class FidelityMetrics:
 
         # Predicción modificada
         if modified_text.strip():
-            # ⚠️ CAMBIO CRÍTICO: Obtener la probabilidad de la CLASE ORIGINAL
             inputs = self.tokenizer(
                 modified_text,
                 return_tensors="pt",
@@ -135,12 +120,16 @@ class FidelityMetrics:
                 outputs = self.model(**inputs)
                 modified_probs = torch.softmax(outputs.logits, dim=-1)[0]
 
-            # ⚠️ CLAVE: Probabilidad de la clase ORIGINAL en el texto modificado
             modified_prob_for_original_class = modified_probs[original_class].item(
             )
 
-            # ⚠️ CAMBIO: Comprehensiveness = cuánto bajó la prob de clase original
+            # st.write(
+            #     f"📊 **Predicción modificada:** Clase {original_class}, Prob {modified_prob_for_original_class:.4f}")
+
             comprehensiveness = original_prob - modified_prob_for_original_class
+
+            # st.write(
+            #     f"📉 **Comprehensiveness:** {comprehensiveness:.4f} (original - modificada)")
 
             # Normalizar a 0-1 (puede ser negativo si la prob SUBE)
             fidelity_score = max(0.0, min(comprehensiveness, 1.0))
@@ -234,7 +223,7 @@ class FidelityMetrics:
         # Evaluar SHAP
         if shap_values is not None:
             shap_fidelity_removal = self.compute_fidelity_removal(
-                text, shap_values, method='shap')
+                text, shap_values)
             shap_fidelity_corr = self.compute_fidelity_correlation(
                 text, shap_values)
 
@@ -247,7 +236,7 @@ class FidelityMetrics:
         # Evaluar LIME
         if lime_values is not None:
             lime_fidelity_removal = self.compute_fidelity_removal(
-                text, lime_values, method='lime')
+                text, lime_values)
             lime_fidelity_corr = self.compute_fidelity_correlation(
                 text, lime_values)
 
@@ -295,12 +284,10 @@ class FidelityMetrics:
 def extract_lime_values(lime_explanation, input_text: str, tokenizer) -> np.ndarray:
     """
     Extrae valores de importancia de una explicación LIME y los mapea a tokens
-
     Args:
         lime_explanation: Explicación LIME
         input_text: Texto original
         tokenizer: Tokenizer del modelo
-
     Returns:
         np.ndarray: Array de importancias por token
     """
@@ -313,48 +300,94 @@ def extract_lime_values(lime_explanation, input_text: str, tokenizer) -> np.ndar
     # Crear array de importancias (inicializado en 0)
     lime_values = np.zeros(len(tokens))
 
+    # Puntuación a ignorar
+    punctuation = {',', '.', '!', '?', ';',
+                   ':', '-', '(', ')', '[', ']', '"', "'"}
+
     # Mapear explicaciones LIME a tokens
     for word, importance in exp_list:
-        # Buscar coincidencias entre palabras LIME y tokens
         word_clean = word.lower().strip()
 
+        # Buscar coincidencias entre palabras LIME y tokens
         for i, token in enumerate(tokens):
-            token_clean = token.lower().strip().replace('##', '')
+            token_clean = token.lower().strip().replace('##', '').replace('Ġ', '')
+
+            # IGNORAR PUNTUACIÓN
+            if token_clean in punctuation:
+                continue
 
             # Diferentes estrategias de matching
             if (word_clean == token_clean or
                 word_clean in token_clean or
                     token_clean in word_clean):
-                lime_values[i] = importance
-                break
+                lime_values[i] += importance  # ← CAMBIO: += en lugar de =
+                # NO hacer break, puede haber múltiples tokens para una palabra
 
     return lime_values
 
 
 def extraer_valores_shap_por_modelo(shap_vals, model_number, original_pred, tokens):
     """
-    Extrae valores SHAP según el tipo de modelo
+    Extrae valores SHAP según el tipo de modelo, filtrando puntuación
     """
+
     if shap_vals is None:
         return None
 
-    if model_number in [3, 4]:  # Modelos de emociones multiclase
-        # OPCIÓN 1: Sumar importancia absoluta de todas las clases
-        combined_importance = np.sum(
-            np.abs(shap_vals[:len(tokens), :]), axis=1)
-        return combined_importance
+    # Definir puntuación a filtrar
+    punctuation = {',', '.', '!', '?', ';', ':',
+                   '-', '(', ')', '[', ']', '"', "'", '...'}
 
-        # OPCIÓN 2: Usar la clase con mayor importancia para cada token
-        # max_importance = np.max(np.abs(shap_vals[:len(tokens), :]), axis=1)
-        # return max_importance
-
-    else:  # Modelos binarios
-        if shap_vals.ndim > 1:
-            class_idx = 1 if 'positive' in original_pred['label'].lower(
-            ) else 0
-            return shap_vals[:len(tokens), class_idx]
+    if model_number in [3, 4]:  # Modelos multiclase
+        if shap_vals.ndim == 1:
+            combined_importance = np.abs(shap_vals[:len(tokens)])
         else:
-            return shap_vals[:len(tokens)]
+            # Extraer clase predicha
+            label = original_pred['label']
+
+            if hasattr(st.session_state, 'class_names') and st.session_state.class_names:
+                try:
+                    class_idx = st.session_state.class_names.index(label)
+                except ValueError:
+                    class_idx = 0
+            else:
+                class_idx = 0
+
+            # Extraer columna de la clase predicha
+            combined_importance = np.abs(shap_vals[:len(tokens), class_idx])
+
+        # ⚠️ FILTRAR PUNTUACIÓN: poner valores en 0 para tokens de puntuación
+        filtered_importance = np.array([
+            0.0 if tokens[i].strip() in punctuation else combined_importance[i]
+            for i in range(len(combined_importance))
+        ])
+
+        return filtered_importance
+
+    else:  # Modelos binarios (1, 2)
+        if shap_vals.ndim > 1:
+            label = original_pred['label'].upper()
+
+            if 'POSITIVE' in label or 'LABEL_2' in label:
+                class_idx = 1
+            elif 'NEGATIVE' in label or 'LABEL_0' in label:
+                class_idx = 0
+            elif 'NEUTRAL' in label or 'LABEL_1' in label:
+                class_idx = 1
+            else:
+                class_idx = 1 if original_pred['score'] > 0.5 else 0
+
+            values = shap_vals[:len(tokens), class_idx]
+        else:
+            values = shap_vals[:len(tokens)]
+
+        # También filtrar puntuación para modelos binarios
+        filtered_values = np.array([
+            0.0 if tokens[i].strip() in punctuation else values[i]
+            for i in range(len(values))
+        ])
+
+        return filtered_values
 
 
 def mostrar_validacion_explicaciones(input_text, shap_values=None, lime_explanation=None,
@@ -372,13 +405,23 @@ def mostrar_validacion_explicaciones(input_text, shap_values=None, lime_explanat
     )
 
     # Extraer valores para SHAP
+    shap_vals = None
     if shap_values is not None:
-        # SHAP values vienen como array multidimensional
         if hasattr(shap_values, 'values'):
-            shap_vals = shap_values.values[0]
+            raw_shap_vals = shap_values.values[0]
         else:
-            shap_vals = shap_values[0] if isinstance(
+            raw_shap_vals = shap_values[0] if isinstance(
                 shap_values, list) else shap_values
+
+        # CRÍTICO: Procesar según tipo de modelo
+        original_pred = st.session_state.classifier(input_text)[0]
+        tokens = st.session_state.tokenizer.tokenize(input_text)
+        model_number = st.session_state.current_model
+
+        shap_vals = extraer_valores_shap_por_modelo(
+            raw_shap_vals, model_number, original_pred, tokens
+        )
+
     else:
         shap_vals = None
 
@@ -389,16 +432,28 @@ def mostrar_validacion_explicaciones(input_text, shap_values=None, lime_explanat
         lime_vals = extract_lime_values(
             lime_explanation, input_text, st.session_state.tokenizer)
 
+    # === CALCULAR MÉTRICAS DE FIDELIDAD (FUERA DE LOS BLOQUES) ===
+    shap_fidelity = None
+    lime_fidelity = None
+
+    if method in ["Solo SHAP", "Ambos (SHAP + LIME)"] and shap_vals is not None:
+        with st.spinner("Calculando fidelidad SHAP..."):
+            shap_fidelity = fidelity_analyzer.compute_fidelity_removal(
+                input_text, shap_vals, top_k=5, method='shap'
+            )
+
+    if method in ["Solo LIME", "Ambos (SHAP + LIME)"] and lime_vals is not None:
+        with st.spinner("Calculando fidelidad LIME..."):
+            lime_fidelity = fidelity_analyzer.compute_fidelity_removal(
+                input_text, lime_vals, top_k=5, method='lime'
+            )
+
     # === MÉTRICAS INDIVIDUALES ===
     col1, col2 = st.columns(2)
 
-    if method in ["Solo SHAP", "Ambos (SHAP + LIME)"] and shap_vals is not None:
+    if method in ["Solo SHAP", "Ambos (SHAP + LIME)"] and shap_fidelity is not None:
         with col1:
             st.subheader("🔷 Fidelidad SHAP")
-            with st.spinner("Calculando fidelidad SHAP..."):
-                shap_fidelity = fidelity_analyzer.compute_fidelity_removal(
-                    input_text, shap_vals, top_k=5, method='shap'
-                )
 
             # Mostrar score
             color = "green" if shap_fidelity > 0.7 else "orange" if shap_fidelity > 0.4 else "red"
@@ -421,15 +476,11 @@ def mostrar_validacion_explicaciones(input_text, shap_values=None, lime_explanat
                 st.error(
                     "❌ **Poco confiable** - Las explicaciones SHAP pueden ser engañosas")
 
-    if method in ["Solo LIME", "Ambos (SHAP + LIME)"] and lime_vals is not None:
+    if method in ["Solo LIME", "Ambos (SHAP + LIME)"] and lime_fidelity is not None:
         with col2:
             st.subheader("🔶 Fidelidad LIME")
-            with st.spinner("Calculando fidelidad LIME..."):
-                lime_fidelity = fidelity_analyzer.compute_fidelity_removal(
-                    input_text, lime_vals, top_k=5, method='lime'
-                )
 
-            # Mostrar score (similar al de SHAP)
+            # Mostrar score
             color = "green" if lime_fidelity > 0.7 else "orange" if lime_fidelity > 0.4 else "red"
             st.markdown(f"""
             <div style='text-align: center; padding: 20px; border-radius: 10px; 
@@ -448,7 +499,7 @@ def mostrar_validacion_explicaciones(input_text, shap_values=None, lime_explanat
                 st.error("❌ **Poco confiable**")
 
     # === COMPARACIÓN DIRECTA (solo si ambos están disponibles) ===
-    if method == "Ambos (SHAP + LIME)" and shap_vals is not None and lime_vals is not None:
+    if method == "Ambos (SHAP + LIME)" and shap_fidelity is not None and lime_fidelity is not None:
         st.markdown("---")
         st.subheader("🔄 Comparación de Fidelidad")
 
@@ -638,24 +689,16 @@ def mostrar_analisis_impacto_palabras(input_text, shap_vals, lime_vals, method):
 
     if shap_values_1d is not None:
         max_shap = np.max(np.abs(shap_values_1d))
-        st.write(
-            f"SHAP rango: {np.min(shap_values_1d):.4f} a {np.max(shap_values_1d):.4f}")
         if max_shap < 0.001:
             st.warning(
                 f"⚠️ Valores SHAP muy pequeños para modelo #{model_number}. "
                 "Esto puede ser normal para este tipo de modelo."
             )
 
-    st.info(
-        f"**Predicción original:** {original_pred['label']} ({original_pred['score']:.3f})")
-
     # ========================================================================
     # PASO 2: AGRUPAR TOKENS EN PALABRAS
     # ========================================================================
     palabras_agregadas = agrupar_tokens_en_palabras(tokens, model_number)
-
-    st.markdown(
-        f"**Tokens detectados:** {len(tokens)} | **Palabras agrupadas:** {len(palabras_agregadas)}")
 
     # ========================================================================
     # PASO 3: CALCULAR IMPORTANCIA AGREGADA POR PALABRA
@@ -1037,59 +1080,6 @@ def interpret_fidelity_score(score: float) -> Tuple[str, str, str]:
         return "No confiable", "darkred", "🚫"
 
 
-def create_fidelity_comparison_plot(shap_score: float, lime_score: float) -> plt.Figure:
-    """
-    Crea gráfico de comparación de fidelidad
-
-    Args:
-        shap_score: Score de fidelidad SHAP
-        lime_score: Score de fidelidad LIME
-
-    Returns:
-        plt.Figure: Figura de matplotlib
-    """
-    fig, ax = plt.subplots(figsize=(10, 6))
-
-    methods = ['SHAP', 'LIME']
-    scores = [shap_score, lime_score]
-    colors = ['#1f77b4', '#ff7f0e']
-
-    bars = ax.bar(methods, scores, color=colors, alpha=0.8, width=0.6)
-
-    # Configurar gráfico
-    ax.set_ylabel('Score de Fidelidad', fontsize=12)
-    ax.set_title('Comparación de Fidelidad: SHAP vs LIME',
-                 fontsize=14, fontweight='bold')
-    ax.set_ylim(0, 1)
-
-    # Líneas de referencia
-    ax.axhline(y=0.7, color='green', linestyle='--',
-               alpha=0.7, linewidth=2, label='Alto (≥0.7)')
-    ax.axhline(y=0.5, color='orange', linestyle='--',
-               alpha=0.7, linewidth=2, label='Moderado (≥0.5)')
-    ax.axhline(y=0.3, color='red', linestyle='--',
-               alpha=0.7, linewidth=2, label='Bajo (≥0.3)')
-
-    # Agregar valores en las barras
-    for bar, score in zip(bars, scores):
-        height = bar.get_height()
-        ax.text(bar.get_x() + bar.get_width()/2, height + 0.02,
-                f'{score:.3f}', ha='center', va='bottom',
-                fontweight='bold', fontsize=11)
-
-    # Estilo
-    ax.legend(loc='upper right')
-    ax.grid(axis='y', alpha=0.3)
-    ax.set_axisbelow(True)
-
-    # Mejorar apariencia
-    for spine in ax.spines.values():
-        spine.set_linewidth(0.5)
-
-    plt.tight_layout()
-    return fig
-
-
 # Funciones de compatibilidad para mantener código existente
 def evaluate_fidelity(model, tokenizer, texts: List[str],
                       explanations: List[np.ndarray]) -> Dict:
@@ -1102,7 +1092,7 @@ def evaluate_fidelity(model, tokenizer, texts: List[str],
     for text, explanations_array in zip(texts, explanations):
         try:
             fidelity = fidelity_analyzer.compute_fidelity_removal(
-                text, explanations_array, top_k=5, method='shap')
+                text, explanations_array)
             fidelities.append(fidelity)
         except Exception as e:
             print(f"Error procesando texto: {e}")
