@@ -3,6 +3,7 @@
 Implementa métricas para evaluar la calidad de explicaciones SHAP y LIME
 """
 
+from src.utils.tokens import TokenFilter
 import streamlit.components.v1 as components
 import json
 import numpy as np
@@ -170,9 +171,22 @@ class FidelityMetrics:
 
         # Generar perturbaciones aleatorias
         for _ in range(min(n_perturbations, 100)):  # Limitar para performance
+            # Filtrar valores no semánticos
+            importance_values = TokenFilter.filter_importance_values(
+                tokens, importance_values
+            )
+
+            # Obtener solo índices semánticos para perturbaciones
+            semantic_indices = TokenFilter.get_semantic_indices(tokens)
+
+            if len(semantic_indices) <= 1:
+                return 0.0
             # Seleccionar tokens aleatorios para eliminar
             n_remove = random.randint(1, min(3, len(tokens)))
-            indices_to_remove = random.sample(range(len(tokens)), n_remove)
+            # Solo perturbar tokens semánticos
+            n_remove_adjusted = min(n_remove, len(semantic_indices))
+            indices_to_remove = random.sample(
+                semantic_indices, n_remove_adjusted)
 
             # Suma de importancia de tokens eliminados
             importance_change = sum(
@@ -300,10 +314,6 @@ def extract_lime_values(lime_explanation, input_text: str, tokenizer) -> np.ndar
     # Crear array de importancias (inicializado en 0)
     lime_values = np.zeros(len(tokens))
 
-    # Puntuación a ignorar
-    punctuation = {',', '.', '!', '?', ';',
-                   ':', '-', '(', ')', '[', ']', '"', "'"}
-
     # Mapear explicaciones LIME a tokens
     for word, importance in exp_list:
         word_clean = word.lower().strip()
@@ -312,8 +322,8 @@ def extract_lime_values(lime_explanation, input_text: str, tokenizer) -> np.ndar
         for i, token in enumerate(tokens):
             token_clean = token.lower().strip().replace('##', '').replace('Ġ', '')
 
-            # IGNORAR PUNTUACIÓN
-            if token_clean in punctuation:
+            # Verificar si el token es semántico
+            if not TokenFilter.is_semantic(token):
                 continue
 
             # Diferentes estrategias de matching
@@ -322,6 +332,9 @@ def extract_lime_values(lime_explanation, input_text: str, tokenizer) -> np.ndar
                     token_clean in word_clean):
                 lime_values[i] += importance  # ← CAMBIO: += en lugar de =
                 # NO hacer break, puede haber múltiples tokens para una palabra
+
+            lime_values = TokenFilter.filter_importance_values(
+                tokens, lime_values)
 
     return lime_values
 
@@ -333,10 +346,6 @@ def extraer_valores_shap_por_modelo(shap_vals, model_number, original_pred, toke
 
     if shap_vals is None:
         return None
-
-    # Definir puntuación a filtrar
-    punctuation = {',', '.', '!', '?', ';', ':',
-                   '-', '(', ')', '[', ']', '"', "'", '...'}
 
     if model_number in [3, 4]:  # Modelos multiclase
         if shap_vals.ndim == 1:
@@ -356,11 +365,10 @@ def extraer_valores_shap_por_modelo(shap_vals, model_number, original_pred, toke
             # Extraer columna de la clase predicha
             combined_importance = np.abs(shap_vals[:len(tokens), class_idx])
 
-        # ⚠️ FILTRAR PUNTUACIÓN: poner valores en 0 para tokens de puntuación
-        filtered_importance = np.array([
-            0.0 if tokens[i].strip() in punctuation else combined_importance[i]
-            for i in range(len(combined_importance))
-        ])
+        # Filtrar usando TokenFilter
+        filtered_importance = TokenFilter.filter_importance_values(
+            tokens, combined_importance
+        )
 
         return filtered_importance
 
@@ -381,11 +389,8 @@ def extraer_valores_shap_por_modelo(shap_vals, model_number, original_pred, toke
         else:
             values = shap_vals[:len(tokens)]
 
-        # También filtrar puntuación para modelos binarios
-        filtered_values = np.array([
-            0.0 if tokens[i].strip() in punctuation else values[i]
-            for i in range(len(values))
-        ])
+        # Filtrar usando TokenFilter
+        filtered_values = TokenFilter.filter_importance_values(tokens, values)
 
         return filtered_values
 
@@ -741,14 +746,9 @@ def mostrar_analisis_impacto_palabras(input_text, shap_vals, lime_vals, method):
         token_details[palabra] = detalles_tokens
 
         # ====================================================================
-        # 3.2: FILTRAR tokens no semánticos
+        # 3.2: FILTRAR palabras no semánticas usando TokenFilter
         # ====================================================================
-        tokens_no_semanticos = {'.', ',', '!', '?', ';', ':', '-', '(', ')',
-                                '[', ']', '"', "'", '...', '--', '``', "''"}
-        conectores_comunes = {'and', 'or', 'the', 'a', 'an', 'of', 'to', 'in',
-                              'on', 'at', 'for', 'with', 'by', 'from', 'as', 'is'}
-
-        if palabra.lower() in tokens_no_semanticos or palabra.lower() in conectores_comunes:
+        if not TokenFilter.is_semantic(palabra):
             impacto_real = 0.0
             nivel = "🚫 Ignorado"
 
@@ -917,7 +917,7 @@ def mostrar_analisis_impacto_palabras(input_text, shap_vals, lime_vals, method):
         - ➕ **SHAP/LIME Total**: Se SUMAN los valores de todos los tokens que forman la palabra
         - 🎯 **Impacto Real**: Se mide reemplazando la PALABRA COMPLETA (no tokens individuales)
         - 📊 **Num_Tokens**: Cantidad de tokens que forman la palabra
-        - 🚫 **Filtrado**: Se excluyen puntuación y conectores del análisis
+        - 🚫 **Filtrado**: Se excluyen puntuación y conectores del análisis (usando TokenFilter)
         
         **Ejemplo:**
         - Palabra: "Boring"
@@ -989,52 +989,67 @@ def mostrar_test_eliminacion(input_text, importance_values, method_name):
     # Tokenizar
     tokens = st.session_state.tokenizer.tokenize(input_text)
 
+    # Preparar importance_values
+    if importance_values.ndim > 1:
+        importance_values = importance_values.flatten()
+
+    importance_subset = importance_values[:len(tokens)]
+
     results = []
     for k in [1, 3, 5]:
         if k >= len(tokens):
             continue
 
-        # Preparar importance_values
-        if importance_values.ndim > 1:
-            importance_values = importance_values.flatten()
+        # Obtener top-k SEMÁNTICOS + valores filtrados
+        top_indices, filtered_importance = TokenFilter.get_top_k_semantic_indices(
+            tokens=tokens,
+            importance_values=importance_subset,
+            k=k
+        )
 
-        importance_subset = importance_values[:len(tokens)]
-        top_indices = np.argsort(np.abs(importance_subset))[-k:]
-        top_indices_list = [int(idx) for idx in top_indices]
-
-        # Obtener palabras que se van a reemplazar
-        original_words = [tokens[i].replace('Ġ', '').replace(
-            '##', '') for i in top_indices_list]
+        # Mostrar información de debug (útil para validar)
+        if k == 1:  # Solo para el primer caso
+            st.caption(f"🔍 Top-{k} tokens semánticos seleccionados:")
+            for idx in top_indices:
+                token = tokens[idx]
+                importance = filtered_importance[idx]
+                st.caption(
+                    f"  • Token: '{token}' | Importancia: {importance:.4f}")
 
         # CREAR TEXTO CON REEMPLAZOS NEUTRALES
         modified_tokens = []
         replacements_made = []
 
         for i, token in enumerate(tokens):
-            if i in top_indices_list:
+            if i in top_indices:
+                # Ya usamos get_top_k_semantic_indices que son semánticos
+
                 # Limpiar token para buscar reemplazo
-                clean_token = token.replace('Ġ', '').replace('##', '').lower()
+                clean_token = TokenFilter.clean_token(token).lower()
 
                 if clean_token in neutral_replacements:
-                    # Reemplazar con palabra neutral
                     replacement = neutral_replacements[clean_token]
-                    # Mantener el formato del token original (espacios, etc.)
-                    if token.startswith('Ġ'):
+                    if token.startswith('Ġ'):  # GPT-2/RoBERTa
                         modified_tokens.append('Ġ' + replacement)
+                    elif token.startswith('##'):  # BERT WordPiece
+                        modified_tokens.append('##' + replacement)
                     else:
                         modified_tokens.append(replacement)
                     replacements_made.append(f"{clean_token}→{replacement}")
                 else:
-                    # Si no hay reemplazo específico, usar palabra neutral genérica
+                    # Reemplazo genérico neutral
                     if token.startswith('Ġ'):
                         modified_tokens.append('Ġokay')
+                    elif token.startswith('##'):
+                        modified_tokens.append('##okay')
                     else:
                         modified_tokens.append('okay')
                     replacements_made.append(f"{clean_token}→okay")
             else:
+                # Mantener token original
                 modified_tokens.append(token)
 
-        # Convertir a texto
+        # Convertir tokens modificados a texto
         modified_text = st.session_state.tokenizer.convert_tokens_to_string(
             modified_tokens)
 
@@ -1043,21 +1058,48 @@ def mostrar_test_eliminacion(input_text, importance_values, method_name):
             new_pred = st.session_state.classifier(modified_text)[0]
             change = abs(original_prob - new_pred['score'])
 
+            # Agregar importancia promedio de tokens reemplazados
+            avg_importance = np.mean([filtered_importance[idx]
+                                     for idx in top_indices]) if top_indices else 0
+
             results.append({
                 'Cantidad': k,
                 'Reemplazos': ', '.join(replacements_made),
-                'Cambio en probabilidad': f'{change:.3f}',
-                'Nueva predicción': f"{new_pred['label']} ({new_pred['score']:.3f})",
-                'Texto modificado': modified_text[:60] + "..." if len(modified_text) > 60 else modified_text
+                'Importancia Promedio': f'{avg_importance:.4f}',
+                'Cambio Probabilidad': f'{change:.3f}',
+                'Nueva Predicción': f"{new_pred['label']} ({new_pred['score']:.3f})",
+                'Texto Modificado': modified_text[:60] + "..." if len(modified_text) > 60 else modified_text
             })
 
-    # Mostrar tabla
+    # Mostrar tabla de resultados
     if results:
         df_results = pd.DataFrame(results)
         st.dataframe(df_results, use_container_width=True)
 
+        # ⭐ CAMBIO 5: Análisis de fidelidad mejorado
+        st.markdown("### 📊 Análisis de Fidelidad")
+
+        if len(results) >= 2:
+            # Comparar k=1 vs k=3
+            change_k1 = float(results[0]['Cambio Probabilidad'])
+            change_k3 = float(results[1]['Cambio Probabilidad']) if len(
+                results) > 1 else 0
+
+            if change_k1 > 0.1:
+                st.success(
+                    f"✅ **Alta fidelidad:** Reemplazar top-1 token causó cambio de {change_k1:.3f}")
+            elif change_k1 > 0.05:
+                st.info(
+                    f"ℹ️ **Fidelidad moderada:** Reemplazar top-1 token causó cambio de {change_k1:.3f}")
+            else:
+                st.warning(
+                    f"⚠️ **Baja fidelidad:** Reemplazar top-1 token solo causó cambio de {change_k1:.3f}")
+                st.caption(
+                    "Posibles causas: Tokens con baja importancia real o modelo robusto a perturbaciones")
+
         st.markdown(
-            "**Estrategia:** Se reemplazan palabras importantes con equivalentes neutrales para medir su impacto real en la predicción.")
+            "**Estrategia:** Se reemplazan palabras semánticamente importantes con equivalentes neutrales "
+            "para medir su impacto real en la predicción del modelo.")
 
 
 def interpret_fidelity_score(score: float) -> Tuple[str, str, str]:
