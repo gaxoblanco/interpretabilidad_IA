@@ -110,7 +110,7 @@ Aplicación Streamlit deployada en Hugging Face Spaces.
 
 ### Core ML
 ```
-transformers==4.30.0    # HuggingFace Transformers
+transformers==4.35.2    # HuggingFace Transformers
 torch==2.0.0            # PyTorch backend
 datasets==2.18.0        # Datasets de HuggingFace
 ```
