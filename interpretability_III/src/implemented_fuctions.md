@@ -14,6 +14,8 @@ interpretability_III/src/
 ├── utils/
 │   ├── __init__.py
 │   ├── image_loader.py
+│   ├── analyze_neuron.py
+│   ├── neuron_activation.py
 │   └── hooks.py
 └── (otros módulos pendientes)
 ```
@@ -291,6 +293,282 @@ self.hooks          # Lista de handles de hooks registrados
 ##### `analyze_sparsity(activations: Dict) -> Dict[str, float]`
 - Analiza la sparsity de las activaciones
 - **Retorna:** {layer_name: sparsity_percentage}
+
+---
+
+---
+
+## 🎨 `src/utils/neuron_activation.py`
+
+### **Funciones Principales de Análisis**
+
+Módulo para visualizar y analizar mapas de activación neuronal de imágenes individuales.
+
+#### **Función: `analyze_single_image_activation()`**
+```python
+analyze_single_image_activation(
+    model: nn.Module,
+    image: torch.Tensor,
+    target_layers: List[str],
+    threshold: float = 0.1,
+    device: torch.device = torch.device('cpu'),
+    hook_class = None
+) -> Tuple[Dict, int]
+```
+
+**Propósito:** Analiza qué neuronas se activan para una imagen específica
+
+**Parámetros:**
+- `model`: Modelo de PyTorch en modo eval
+- `image`: Imagen tensor [C, H, W] o [1, C, H, W]
+- `target_layers`: Lista de nombres de capas a analizar
+- `threshold`: Umbral para considerar neurona "activa" (default: 0.1)
+- `device`: Device donde ejecutar (CPU/GPU)
+- `hook_class`: Clase ActivationHook (debe ser pasada)
+
+**Retorna:** 
+- Tupla de (activation_summary: Dict, pred_class: int)
+- `activation_summary` contiene por capa:
+  - `activations`: Array con valores por neurona
+  - `active_indices`: Índices de neuronas activas
+  - `num_active`: Número de neuronas activas
+  - `total_neurons`: Total de neuronas
+  - `activation_rate`: Porcentaje de activación
+  - `max_activation`: Activación máxima
+  - `mean_activation`: Activación promedio
+  - `mean_active_only`: Promedio solo de neuronas activas
+
+---
+
+#### **Función: `plot_neuron_activation_map()`**
+```python
+plot_neuron_activation_map(
+    image: torch.Tensor,
+    activation_summary: Dict,
+    pred_class: int,
+    class_names: List[str],
+    true_label: Optional[int] = None,
+    threshold: float = 0.1,
+    figsize: Tuple[int, int] = None,
+    max_neurons_display: int = 64
+) -> plt.Figure
+```
+
+**Propósito:** Visualiza el mapa de activación neuronal para una imagen
+
+**Crea una figura con:**
+- Imagen original en la parte superior
+- Para cada capa: gráfico de barras de activaciones + histograma
+
+**Parámetros:**
+- `image`: Imagen tensor [C, H, W] o [1, C, H, W]
+- `activation_summary`: Dict retornado por analyze_single_image_activation
+- `pred_class`: Clase predicha (índice)
+- `class_names`: Lista de nombres de clases
+- `true_label`: Clase real (opcional, para comparación)
+- `threshold`: Umbral usado para marcar neuronas activas
+- `figsize`: Tamaño de la figura (ancho, alto)
+- `max_neurons_display`: Máximo de neuronas a mostrar
+
+**Retorna:** Figura de matplotlib
+
+---
+
+#### **Función: `print_activation_statistics()`**
+```python
+print_activation_statistics(
+    activation_summary: Dict,
+    top_k: int = 5
+)
+```
+
+**Propósito:** Imprime estadísticas detalladas de activaciones
+
+**Muestra por capa:**
+- Total de neuronas
+- Neuronas activas (número y porcentaje)
+- Activación máxima, promedio y promedio de activas
+- Top K neuronas más activas
+
+---
+
+#### **Función: `compare_activations()`**
+```python
+compare_activations(
+    summary1: Dict,
+    summary2: Dict,
+    label1: str = "Imagen 1",
+    label2: str = "Imagen 2"
+)
+```
+
+**Propósito:** Compara activaciones entre dos imágenes
+
+**Muestra por capa:**
+- Número de neuronas activas en cada imagen
+- Neuronas comunes
+- Neuronas exclusivas de cada imagen
+- Similitud de Jaccard
+
+---
+
+#### **Función: `find_specialized_neurons()`**
+```python
+find_specialized_neurons(
+    activation_summaries: List[Dict],
+    layer_name: str,
+    min_activation_rate: float = 0.8
+) -> np.ndarray
+```
+
+**Propósito:** Encuentra neuronas que se activan consistentemente en múltiples imágenes
+
+**Parámetros:**
+- `activation_summaries`: Lista de resúmenes de activación
+- `layer_name`: Nombre de la capa a analizar
+- `min_activation_rate`: Tasa mínima de activación (0-1)
+
+**Retorna:** Array con índices de neuronas especializadas
+
+**Uso típico:** Identificar "detectores" especializados en una clase (ej: detectores de perros)
+
+---
+
+### **Funciones Auxiliares Internas**
+
+#### `_denormalize_image(image: torch.Tensor) -> torch.Tensor`
+- Denormaliza imagen con stats de ImageNet
+- **Input:** [C, H, W] o [1, C, H, W]
+- **Output:** [C, H, W] en rango [0, 1]
+
+#### `_plot_activation_bars(ax, activations, active_indices, total_neurons, layer_name, summary, max_display)`
+- Dibuja gráfico de barras de activaciones
+- Colores: rojo para activas, gris para inactivas
+- Si >64 neuronas, muestra solo las más activas
+
+#### `_plot_activation_histogram(ax, activations, threshold)`
+- Dibuja histograma de distribución
+- Solo valores > 0 (excluye sparsity)
+- Línea vertical en threshold
+
+---
+
+## 🔬 `src/utils/analyze_neuron.py`
+
+### **Funciones de Análisis Avanzado de Neuronas**
+
+Funciones para análisis detallado de comportamiento de neuronas individuales.
+
+#### **Función: `analyze_spatial_bias()` (static)**
+```python
+@staticmethod
+analyze_spatial_bias(
+    neuron_index: int,
+    layer_name: str,
+    concatenated_activations: dict,
+    num_samples: int = 50,
+    verbose: bool = True
+) -> dict
+```
+
+**Propósito:** Analiza si una neurona tiene sesgo espacial (izquierda vs derecha, arriba vs abajo)
+
+**Parámetros:**
+- `neuron_index`: Índice de la neurona a analizar
+- `layer_name`: Nombre de la capa (ej: 'layer3.1.relu')
+- `concatenated_activations`: Dict con activaciones capturadas
+- `num_samples`: Número de imágenes a analizar
+- `verbose`: Si True, imprime resultados detallados
+
+**Retorna:** Dict con análisis completo:
+- `neuron_info`: Información básica de la neurona
+- `horizontal_bias`: Análisis izquierda/derecha
+  - `bias_type`: Tipo de sesgo ("FUERTE hacia IZQUIERDA", etc.)
+  - `left_mean`, `right_mean`: Activaciones promedio
+  - `ratio`: Ratio izquierda/derecha
+  - `left_dominant_pct`, `right_dominant_pct`: Porcentajes de dominancia
+- `vertical_bias`: Análisis arriba/abajo
+  - `bias_type`: Tipo de sesgo
+  - `top_mean`, `bottom_mean`: Activaciones promedio
+  - `ratio`: Ratio arriba/abajo
+- `dominant_bias`: Sesgo dominante general
+- `_raw_data`: Datos crudos para análisis adicional
+
+**Categorías de sesgo:**
+- Sin sesgo: ratio entre 0.91 y 1.1
+- Moderado: ratio entre 0.77-0.91 o 1.1-1.3
+- Fuerte: ratio < 0.77 o > 1.3
+
+**Uso típico:** Identificar si una neurona detecta features en posiciones específicas de la imagen
+
+---
+
+#### **Función: `analyze_neuron_correlation_with_visual_features()` (static)**
+```python
+@staticmethod
+analyze_neuron_correlation_with_visual_features(
+    neuron_idx: int,
+    layer_name: str,
+    concatenated_activations: dict,
+    test_images: torch.Tensor,
+    num_samples: int = 50,
+    plot: bool = True
+) -> dict
+```
+
+**Propósito:** Analiza correlación entre activaciones de neurona y características visuales de imagen
+
+**Características analizadas:**
+1. **Brillo promedio**: Luminosidad general de la imagen
+2. **Contraste**: Diferencia entre píxeles claros y oscuros
+3. **Bordes (Sobel)**: Cantidad de bordes detectados
+4. **Varianza**: Variabilidad de píxeles
+5. **Entropía**: Complejidad de la imagen
+6. **Gradiente resized (2×2)**: Transiciones de intensidad
+
+**Parámetros:**
+- `neuron_idx`: Índice de neurona a analizar
+- `layer_name`: Nombre de capa
+- `concatenated_activations`: Dict con activaciones
+- `test_images`: Tensor de imágenes [B, C, H, W]
+- `num_samples`: Número de imágenes
+- `plot`: Si True, muestra gráficos
+
+**Retorna:** Dict con:
+- `neuron_info`: Información básica
+- `features`: Dict con valores de cada característica visual
+- `correlations`: Dict con correlaciones de Pearson
+  - `sorted`: Lista ordenada de (feature, correlación)
+  - Por feature: valor de correlación
+- `interpretation`: Interpretación automática
+- `_raw_visualizations`: Datos para gráficos
+
+**Interpretación automática:**
+- Correlación alta (+0.5 a +1.0): Relación positiva fuerte
+- Correlación moderada (+0.3 a +0.5): Relación positiva moderada
+- Sin correlación (-0.3 a +0.3): Sin relación clara
+- Correlación negativa (-0.5 a -0.3): Relación inversa moderada
+- Correlación muy negativa (-1.0 a -0.5): Relación inversa fuerte
+
+**Visualizaciones generadas (si plot=True):**
+1. Comparación de imágenes con características visuales
+2. Gráfico de barras de correlaciones
+
+**Uso típico:** 
+- Entender qué características visuales activan una neurona
+- Identificar "qué busca" cada neurona (bordes, contraste, texturas, etc.)
+
+---
+
+#### **Funciones Auxiliares en analyze_neuron.py:**
+
+##### `visualize_neuron_activation_map()` (versión simplificada)
+- Similar a la función principal pero más básica
+- Retorna activation_summary y pred_class
+
+##### `plot_activation_map()`
+- Visualiza mapa con imagen + barras + histogramas por capa
+- Versión completa con múltiples subplots
 
 ---
 
