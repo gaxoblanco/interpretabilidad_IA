@@ -30,27 +30,38 @@ def get_layer_filters(model: nn.Module, layer_name: str) -> torch.Tensor:
     raise ValueError(f"No se encontró capa convolucional: {layer_name}")
 
 
-def normalize_filter_for_visualization(filter_tensor: torch.Tensor) -> np.ndarray:
+def normalize_filter_for_visualization(
+    filter_tensor: torch.Tensor,
+    visualization_mode: str = 'auto'
+) -> np.ndarray:
     """
-    Normaliza un filtro para visualización RGB.
+    Normaliza un filtro para visualización según el número de canales.
 
     Args:
         filter_tensor: Tensor [in_channels, kernel_h, kernel_w]
+        visualization_mode: 'rgb', 'grayscale', 'auto'
 
     Returns:
         Array numpy [kernel_h, kernel_w, 3] normalizado a [0, 1]
     """
-    # Si tiene 3 canales (RGB), transponer a formato de imagen
-    if filter_tensor.shape[0] == 3:
-        img = filter_tensor.cpu().numpy().transpose(1, 2, 0)  # [H, W, 3]
-    else:
-        # Si tiene más o menos canales, tomar primeros 3 o promediar
-        if filter_tensor.shape[0] >= 3:
-            img = filter_tensor[:3].cpu().numpy().transpose(1, 2, 0)
+    num_channels = filter_tensor.shape[0]
+
+    # Modo automático: decidir según número de canales
+    if visualization_mode == 'auto':
+        if num_channels == 3:
+            visualization_mode = 'rgb'
         else:
-            # Escala de grises, replicar en 3 canales
-            gray = filter_tensor[0].cpu().numpy()
-            img = np.stack([gray, gray, gray], axis=-1)
+            visualization_mode = 'grayscale'
+
+    # Modo RGB: solo si tiene exactamente 3 canales
+    if visualization_mode == 'rgb' and num_channels == 3:
+        img = filter_tensor.cpu().numpy().transpose(1, 2, 0)  # [H, W, 3]
+
+    # Modo escala de grises: promediar todos los canales
+    else:
+        # Promediar todos los canales de entrada
+        gray = filter_tensor.mean(dim=0).cpu().numpy()  # [H, W]
+        img = np.stack([gray, gray, gray], axis=-1)  # [H, W, 3]
 
     # Normalizar a [0, 1]
     img_min = img.min()
@@ -71,7 +82,8 @@ def create_filter_grid_rgb(
     num_cols: int = 4
 ) -> plt.Figure:
     """
-    Crea un grid mostrando los filtros RGB de la capa.
+    Crea un grid mostrando los filtros de la capa.
+    Adapta la visualización según si la capa es RGB o profunda.
 
     Args:
         model: Modelo PyTorch
@@ -84,6 +96,10 @@ def create_filter_grid_rgb(
     """
     # Obtener filtros
     filters = get_layer_filters(model, layer_name)
+
+    # Detectar número de canales de entrada
+    num_input_channels = filters.shape[1]
+    is_rgb_layer = (num_input_channels == 3)
 
     num_filters = len(filter_indices)
     num_rows = (num_filters + num_cols - 1) // num_cols
@@ -106,10 +122,24 @@ def create_filter_grid_rgb(
 
         # Obtener y normalizar filtro
         filter_tensor = filters[filter_idx]  # [in_channels, H, W]
-        filter_img = normalize_filter_for_visualization(filter_tensor)
+
+        if is_rgb_layer:
+            # Capa RGB: mostrar en color
+            filter_img = normalize_filter_for_visualization(
+                filter_tensor, visualization_mode='rgb')
+        else:
+            # Capa profunda: mostrar promedio de canales en escala de grises
+            filter_img = normalize_filter_for_visualization(
+                filter_tensor, visualization_mode='grayscale')
 
         # Mostrar filtro
-        ax.imshow(filter_img, interpolation='nearest')
+        if is_rgb_layer:
+            ax.imshow(filter_img, interpolation='nearest')
+        else:
+            # Mostrar solo el canal gris con colormap
+            ax.imshow(filter_img[:, :, 0], cmap='viridis',
+                      interpolation='nearest')
+
         ax.set_title(f'Filtro {filter_idx}', fontsize=10, fontweight='bold')
         ax.axis('off')
 
@@ -126,8 +156,13 @@ def create_filter_grid_rgb(
         col = idx % num_cols
         axes[row, col].axis('off')
 
-    plt.suptitle(f'Filtros RGB de {layer_name}\n(Patrones de 7×7 que busca cada neurona)',
-                 fontsize=14, fontweight='bold')
+    # Título adaptativo
+    if is_rgb_layer:
+        title = f'Filtros RGB de {layer_name}\n(Patrones de color que busca cada neurona)'
+    else:
+        title = f'Filtros de {layer_name}\n(Promedio de {num_input_channels} canales - Visualización en escala de grises)'
+
+    plt.suptitle(title, fontsize=14, fontweight='bold')
     plt.tight_layout()
 
     return fig
@@ -872,6 +907,87 @@ def create_rgb_channel_visualization(
 
     fig.suptitle(f'Descomposición por Canales del Filtro {filter_idx}',
                  fontsize=14, fontweight='bold', y=0.98)
+
+    plt.tight_layout()
+    return fig
+
+
+def create_combined_activation_overlay(
+    image_vis: np.ndarray,
+    activations: torch.Tensor,
+    neuron_indices: List[int],
+    alpha: float = 0.5,
+    cmap: str = 'hot'
+) -> plt.Figure:
+    """
+    Crea overlay combinado de múltiples neuronas sobre la imagen.
+
+    Args:
+        image_vis: Imagen original [H, W, 3]
+        activations: Tensor de activaciones [1, C, H, W]
+        neuron_indices: Lista de índices de neuronas a combinar
+        alpha: Transparencia del heatmap
+        cmap: Colormap
+
+    Returns:
+        Figura de matplotlib con overlays
+    """
+    from scipy.ndimage import zoom
+
+    h, w = image_vis.shape[:2]
+
+    # Crear figura con subplots: Individual + Combinado
+    num_neurons = len(neuron_indices)
+    fig, axes = plt.subplots(
+        1, num_neurons + 1, figsize=(4 * (num_neurons + 1), 4))
+
+    if num_neurons == 1:
+        axes = [axes[0], axes[1]]
+
+    # Inicializar mapa combinado
+    combined_map = np.zeros((h, w))
+
+    # Mostrar cada neurona individual
+    for idx, neuron_idx in enumerate(neuron_indices):
+        ax = axes[idx]
+
+        # Obtener y redimensionar mapa de activación
+        act_map = activations[0, neuron_idx, :, :].cpu().numpy()
+        h_act, w_act = act_map.shape
+
+        if (h_act, w_act) != (h, w):
+            zoom_factors = (h / h_act, w / w_act)
+            act_resized = zoom(act_map, zoom_factors, order=1)
+        else:
+            act_resized = act_map
+
+        # Normalizar
+        act_min, act_max = act_resized.min(), act_resized.max()
+        if act_max > act_min:
+            act_norm = (act_resized - act_min) / (act_max - act_min)
+        else:
+            act_norm = act_resized
+
+        # Agregar al mapa combinado
+        combined_map += act_norm
+
+        # Mostrar overlay individual
+        ax.imshow(image_vis)
+        ax.imshow(act_norm, cmap=cmap, alpha=alpha)
+        ax.set_title(f'Filtro {neuron_idx}', fontsize=10, fontweight='bold')
+        ax.axis('off')
+
+    # Normalizar mapa combinado
+    if combined_map.max() > 0:
+        combined_map = combined_map / combined_map.max()
+
+    # Mostrar mapa combinado
+    ax_combined = axes[-1]
+    ax_combined.imshow(image_vis)
+    ax_combined.imshow(combined_map, cmap=cmap, alpha=alpha)
+    ax_combined.set_title(
+        f'Combinado ({num_neurons} filtros)', fontsize=10, fontweight='bold')
+    ax_combined.axis('off')
 
     plt.tight_layout()
     return fig
