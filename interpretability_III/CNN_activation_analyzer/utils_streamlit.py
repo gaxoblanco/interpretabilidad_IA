@@ -3,11 +3,11 @@ Utilidades para análisis de activaciones de CNN con Streamlit.
 Adaptado del módulo image_analyzer.py original.
 """
 
-from turtle import st
+import streamlit as st
 import torch
 import torch.nn as nn
 import numpy as np
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Union
 from PIL import Image
 import matplotlib.pyplot as plt
 import io
@@ -439,3 +439,160 @@ def fig_to_image(fig: plt.Figure) -> Image.Image:
     img = Image.open(buf)
     plt.close(fig)
     return img
+
+
+def run_ablation_experiment(
+    model: nn.Module,
+    image: torch.Tensor,
+    target_layer: str,
+    neuron_idx: Union[int, List[int]],  # ← Ahora acepta lista
+    experiment_type: str = 'knockout',
+    amplification_factor: float = 5.0,
+    noise_level: float = 0.5,
+    device: torch.device = None
+) -> Dict:
+    """
+    Realiza experimento de ablación modificando activaciones de una o más neuronas.
+
+    Args:
+        model: Modelo PyTorch
+        image: Tensor de imagen [1, 3, H, W]
+        target_layer: Nombre de la capa
+        neuron_idx: Índice o lista de índices de neuronas a modificar
+        experiment_type: 'knockout', 'isolation', 'amplify', 'add_noise', 'group_knockout', 'group_isolation', 'group_amplify', 'group_noise'
+        amplification_factor: Factor de amplificación (solo para 'amplify' y 'group_amplify')
+        noise_level: Nivel de ruido gaussiano (solo para 'add_noise' y 'group_noise')
+        device: Device de cómputo
+
+    Returns:
+        Dict con predicción y confianza modificadas
+    """
+    if device is None:
+        device = torch.device('cpu')
+
+    model.eval()
+
+    # Convertir a lista si es un solo índice
+    if isinstance(neuron_idx, int):
+        neuron_indices = [neuron_idx]
+    else:
+        neuron_indices = neuron_idx
+
+    # Hook para modificar activaciones
+    modified_activations = {}
+
+    def modification_hook(module, input, output):
+        # Clonar para no modificar el original
+        modified = output.clone()
+
+        if experiment_type == 'knockout':
+            # Apagar la neurona específica (individual)
+            for idx in neuron_indices:
+                modified[0, idx, :, :] = 0
+
+        elif experiment_type == 'isolation':
+            # Apagar TODAS excepto la neurona específica (individual)
+            modified[0, :, :, :] = 0
+            for idx in neuron_indices:
+                modified[0, idx, :, :] = output[0, idx, :, :]
+
+        elif experiment_type == 'amplify':
+            # Amplificar la neurona específica (individual)
+            for idx in neuron_indices:
+                modified[0, idx, :, :] *= amplification_factor
+
+        elif experiment_type == 'group_amplify':
+            # Amplificar el GRUPO de neuronas
+            for idx in neuron_indices:
+                modified[0, idx, :, :] *= amplification_factor
+
+        elif experiment_type == 'group_knockout':
+            # Apagar el GRUPO de neuronas
+            for idx in neuron_indices:
+                modified[0, idx, :, :] = 0
+
+        elif experiment_type == 'group_isolation':
+            # Apagar TODAS excepto el GRUPO de neuronas
+            modified[0, :, :, :] = 0
+            for idx in neuron_indices:
+                modified[0, idx, :, :] = output[0, idx, :, :]
+
+        elif experiment_type == 'add_noise':
+            # Agregar ruido gaussiano a las neuronas específicas (individual)
+            for idx in neuron_indices:
+                # Obtener estadísticas de la activación original para escalar el ruido
+                act_std = output[0, idx, :, :].std()
+
+                # Generar ruido gaussiano escalado por noise_level
+                noise = torch.randn_like(
+                    output[0, idx, :, :]) * act_std * noise_level
+                modified[0, idx, :, :] = output[0, idx, :, :] + noise
+
+        elif experiment_type == 'group_noise':
+            # Agregar ruido gaussiano al GRUPO de neuronas
+            for idx in neuron_indices:
+                # Obtener estadísticas de la activación original para escalar el ruido
+                act_std = output[0, idx, :, :].std()
+
+                # Generar ruido gaussiano escalado por noise_level
+                noise = torch.randn_like(
+                    output[0, idx, :, :]) * act_std * noise_level
+                modified[0, idx, :, :] = output[0, idx, :, :] + noise
+
+        modified_activations['output'] = modified
+        return modified
+
+    # Registrar hook
+    hook_handle = None
+    for name, module in model.named_modules():
+        if name == target_layer:
+            hook_handle = module.register_forward_hook(modification_hook)
+            break
+
+    if hook_handle is None:
+        raise ValueError(f"No se encontró la capa: {target_layer}")
+
+    # Forward pass con modificación
+    with torch.no_grad():
+        output = model(image)
+        probs = torch.softmax(output, dim=1)
+        confidence, prediction = torch.max(probs, dim=1)
+
+    # Limpiar hook
+    hook_handle.remove()
+
+    return {
+        'prediction': prediction.item(),
+        'confidence': confidence.item(),
+        'probabilities': probs[0].cpu().numpy()
+    }
+
+
+def get_imagenet_class_name(class_idx: int) -> str:
+    """
+    Obtiene el nombre de una clase de ImageNet por su índice.
+
+    Args:
+        class_idx: Índice de la clase (0-999)
+
+    Returns:
+        Nombre legible de la clase
+    """
+    try:
+        import json
+        import urllib.request
+
+        # URL del archivo de clases ImageNet
+        url = "https://raw.githubusercontent.com/anishathalye/imagenet-simple-labels/master/imagenet-simple-labels.json"
+
+        # Descargar y cachear
+        with urllib.request.urlopen(url) as response:
+            class_names = json.loads(response.read().decode())
+
+        if 0 <= class_idx < len(class_names):
+            return class_names[class_idx]
+        else:
+            return f"Clase #{class_idx}"
+
+    except Exception as e:
+        return f"Clase #{class_idx}"
