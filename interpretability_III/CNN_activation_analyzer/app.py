@@ -217,6 +217,59 @@ cmap = st.sidebar.selectbox(
     index=0
 )
 
+# ========================================================================
+# DETECCIÓN DE CAMBIOS EN SIDEBAR
+# ========================================================================
+
+# Detectar si hubo cambios en los parámetros del sidebar
+# Inicializar valores previos si no existen
+if 'prev_model' not in st.session_state:
+    st.session_state['prev_model'] = model_name
+    st.session_state['prev_layer'] = selected_layer
+    st.session_state['prev_top_k'] = top_k
+    st.session_state['prev_criterion'] = criterion
+    st.session_state['prev_activation_weight'] = activation_weight
+    st.session_state['prev_min_sparsity'] = min_sparsity
+    st.session_state['prev_alpha'] = alpha
+    st.session_state['prev_cmap'] = cmap
+
+# Verificar si hubo cambios
+params_changed = (
+    st.session_state['prev_model'] != model_name or
+    st.session_state['prev_layer'] != selected_layer or
+    st.session_state['prev_top_k'] != top_k or
+    st.session_state['prev_criterion'] != criterion or
+    st.session_state['prev_activation_weight'] != activation_weight or
+    st.session_state['prev_min_sparsity'] != min_sparsity or
+    st.session_state['prev_alpha'] != alpha or
+    st.session_state['prev_cmap'] != cmap
+)
+# Si hubo cambios, hacer scroll al inicio
+if params_changed:
+    # LIMPIAR RESULTADOS VIEJOS
+    if 'results' in st.session_state:
+        del st.session_state['results']
+
+    # Agregar timestamp único para forzar ejecución del script
+    import time
+    timestamp = int(time.time() * 1000)
+
+    st.markdown(f"""
+        <script id="scroll-script-{timestamp}">
+            window.parent.document.querySelector('section.main').scrollTo(0, 0);
+        </script>
+    """, unsafe_allow_html=True)
+
+    # Actualizar valores previos
+    st.session_state['prev_model'] = model_name
+    st.session_state['prev_layer'] = selected_layer
+    st.session_state['prev_top_k'] = top_k
+    st.session_state['prev_criterion'] = criterion
+    st.session_state['prev_activation_weight'] = activation_weight
+    st.session_state['prev_min_sparsity'] = min_sparsity
+    st.session_state['prev_alpha'] = alpha
+    st.session_state['prev_cmap'] = cmap
+
 # Sección principal - Carga de imagen
 st.header("📸 Carga de Imagen")
 
@@ -285,6 +338,20 @@ if 'current_image' in st.session_state:
 
     # Botón de análisis
     if st.button("🚀 Analizar Activaciones", type="primary"):
+
+        # ═══════════════════════════════════════════════════════════════
+        # LIMPIAR RESULTADOS ANTERIORES DE TAB 6
+        # ═══════════════════════════════════════════════════════════════
+        if 'ablation_results' in st.session_state:
+            del st.session_state['ablation_results']
+        if 'ablation_neurons' in st.session_state:
+            del st.session_state['ablation_neurons']
+        if 'ablation_amp_factor' in st.session_state:
+            del st.session_state['ablation_amp_factor']
+        if 'ablation_noise_level' in st.session_state:
+            del st.session_state['ablation_noise_level']
+        # Crear columnas para imagen + progreso
+        col_img_prog, col_status_prog = st.columns([1, 1])
         with st.spinner("Analizando imagen... Esto puede tomar unos segundos..."):
             try:
                 # Crear analizador
@@ -333,14 +400,23 @@ if 'current_image' in st.session_state:
                     'stats': stats,
                     'top_neurons': top_neurons,
                     'img_vis': img_vis,
-                    'layer_name': selected_layer
+                    'layer_name': selected_layer,
+                    'image_tensor': img_tensor
                 }
-                NUM_FILTROS_DETALLE = 6
 
                 # Cleanup
                 analyzer.cleanup()
 
                 st.success("✅ Análisis completado!")
+
+                # Scroll al inicio de la página
+                st.markdown("""
+                    <script>
+                        window.parent.document.querySelector('section.main').scrollTo(0, 0);
+                    </script>
+                """, unsafe_allow_html=True)
+
+                st.rerun()
 
             except Exception as e:
                 st.error(f"❌ Error durante el análisis: {str(e)}")
@@ -356,13 +432,14 @@ if 'results' in st.session_state:
     st.header("📊 Resultados del Análisis")
 
     # Crear tabs para organizar resultados
-    tab0, tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    tab0, tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
         "📊 Resultados Generales",
         "🔥 Heatmaps Superpuestos",
         "🎨 Grid de Filtros",
         "🔬 Análisis Detallado",
         "🎯 Visualización de Filtros",
-        "🤖 Predicción del Modelo"
+        "🤖 Predicción del Modelo",
+        "🧪 Experimentos de Ablación"
     ])
 
     # ===================================================================
@@ -482,10 +559,10 @@ if 'results' in st.session_state:
             )
 
         # Mostrar los top 5 más interesantes por defecto
-        num_heatmaps_to_show = min(6, len(results['top_neurons']))
+        num_heatmaps_to_show = min(top_k, len(results['top_neurons']))
 
         # Crear grid de heatmaps (2 columnas)
-        cols_per_row = 2
+        cols_per_row = 3
         num_rows = (num_heatmaps_to_show + cols_per_row - 1) // cols_per_row
 
         for row_idx in range(num_rows):
@@ -511,11 +588,11 @@ if 'results' in st.session_state:
                                 title=f"#{neuron_list_idx + 1}: Filtro {neuron_idx}",
                                 alpha=alpha,
                                 cmap=cmap,
-                                figsize=(4, 4)
+                                figsize=(3, 3)
                             )
                         else:
                             # Solo mapa de calor (sin imagen de fondo)
-                            fig, ax = plt.subplots(figsize=(4, 4))
+                            fig, ax = plt.subplots(figsize=(3, 3))
 
                             # Redimensionar mapa de activación
                             from scipy.ndimage import zoom
@@ -641,6 +718,16 @@ if 'results' in st.session_state:
         st.info(
             "💡 Analiza cada filtro individualmente para entender qué detectó y dónde.")
 
+        # CSS para permitir wrap en tabs
+        st.markdown("""
+            <style>
+            /* Permitir que los tabs hagan wrap en múltiples líneas */
+            div[data-baseweb="tab-list"] {
+                flex-wrap: wrap !important;
+            }
+            </style>
+        """, unsafe_allow_html=True)
+
         # Importar funciones necesarias
         from filter_visualization import (
             compute_activation_regions,
@@ -649,8 +736,9 @@ if 'results' in st.session_state:
         )
 
         # Pre-calcular todas las regiones de activación
+        num_filtros_detalle = min(top_k, len(results['top_neurons']))
         all_regions = {}
-        for neuron_idx in results['top_neurons'][:NUM_FILTROS_DETALLE]:
+        for neuron_idx in results['top_neurons'][:num_filtros_detalle]:
             act_map = activations[0, neuron_idx, :, :].cpu().numpy()
             all_regions[neuron_idx] = compute_activation_regions(
                 act_map,
@@ -662,7 +750,7 @@ if 'results' in st.session_state:
         # Crear pestañas para cada uno de los 5 filtros
         filter_tabs = st.tabs([
             f"Filtro {results['top_neurons'][i]} (#{i+1})"
-            for i in range(min(6, len(results['top_neurons'])))
+            for i in range(num_filtros_detalle)
         ])
 
         # Generar contenido para cada pestaña
@@ -704,13 +792,13 @@ if 'results' in st.session_state:
 
                     # Mostrar descomposición RGB del filtro
                     st.markdown(
-                        "### 🎨 Descomposición del Filtro por Canales RGB")
+                        "### 🎨 Patrón del Filtro")
 
                     # Importar función para extraer pesos del filtro
                     from filter_visualization import extract_filter_weights_rgb, create_rgb_channel_visualization
 
                     try:
-                        # Extraer los pesos del filtro
+                        # Intentar extraer pesos RGB
                         filter_weights = extract_filter_weights_rgb(
                             model=model,
                             layer_name=results['layer_name'],
@@ -718,7 +806,9 @@ if 'results' in st.session_state:
                         )
 
                         if filter_weights is not None:
-                            # Crear visualización de los 4 canales (RGB + Combinado)
+                            # Capa RGB real - Mostrar descomposición completa
+                            st.markdown("#### Descomposición por Canales RGB")
+
                             fig_channels = create_rgb_channel_visualization(
                                 filter_weights=filter_weights,
                                 filter_idx=neuron_idx
@@ -728,32 +818,38 @@ if 'results' in st.session_state:
                             plt.close(fig_channels)
 
                             st.caption(
-                                "💡 **Interpretación**: Cada canal muestra la intensidad de ese color en el filtro. "
-                                "Áreas más brillantes = el filtro responde fuertemente a ese color en esa posición. "
-                                "El combinado muestra el patrón de color completo que busca el filtro."
+                                "💡 **Interpretación**: Esta es una capa temprana que opera directamente sobre píxeles RGB. "
+                                "Cada canal muestra qué intensidad de ese color busca el filtro."
                             )
                         else:
+                            # Capa profunda - Mostrar explicación
                             st.info(
-                                "ℹ️ Esta capa es demasiado profunda para visualizar pesos RGB directamente.")
+                                f"ℹ️ **Capa profunda detectada**: `{results['layer_name']}`\n\n"
+                                "Esta capa no opera sobre píxeles RGB directamente, sino sobre "
+                                "representaciones abstractas aprendidas por capas anteriores.\n\n"
+                                "**¿Qué significa esto?**\n"
+                                "- Los filtros tienen cientos de canales de entrada (no solo 3 RGB)\n"
+                                "- No se pueden visualizar como 'patrones de color'\n"
+                                "- Las **regiones de activación** arriba son una forma de entender qué detecta este filtro"
+                            )
 
                     except Exception as e:
-                        st.warning(
-                            f"⚠️ No se pueden visualizar canales RGB para esta capa: {str(e)}")
+                        st.error(f"❌ Error al visualizar filtro: {str(e)}")
 
                     # Sección 2: Heatmap completo (justo debajo)
-                    st.markdown("---")
-                    st.markdown("### 🌡️ Mapa de Calor Completo")
+                    # st.markdown("---")
+                    # st.markdown("### 🌡️ Mapa de Calor Completo")
 
-                    fig_heat = create_activation_heatmap(
-                        image_vis=results['img_vis'],
-                        activation_map=act_map,
-                        title=f"Filtro {neuron_idx}",
-                        alpha=alpha,
-                        cmap=cmap,
-                        figsize=(3, 3)
-                    )
-                    st.pyplot(fig_heat)
-                    plt.close(fig_heat)
+                    # fig_heat = create_activation_heatmap(
+                    #     image_vis=results['img_vis'],
+                    #     activation_map=act_map,
+                    #     title=f"Filtro {neuron_idx}",
+                    #     alpha=alpha,
+                    #     cmap=cmap,
+                    #     figsize=(3, 3)
+                    # )
+                    # st.pyplot(fig_heat)
+                    # plt.close(fig_heat)
 
                 # ===================================================================
                 # COLUMNA DERECHA: Análisis (se mantiene a la derecha todo el tiempo)
@@ -838,7 +934,7 @@ if 'results' in st.session_state:
                 fig_filters = create_filter_grid_rgb(
                     model=model,
                     layer_name=results['layer_name'],
-                    filter_indices=results['top_neurons'][:6],
+                    filter_indices=results['top_neurons'][:top_k],
                     num_cols=6
                 )
                 st.pyplot(fig_filters)
@@ -865,7 +961,7 @@ if 'results' in st.session_state:
         st.caption("Fragmentos reales de la imagen que más activaron cada filtro")
 
         # Mostrar patches para los top 5 filtros
-        for idx, neuron_idx in enumerate(results['top_neurons'][:6], 1):
+        for idx, neuron_idx in enumerate(results['top_neurons'][:top_k], 1):
             act_map = activations[0, neuron_idx, :, :].cpu().numpy()
 
             # Encabezado del filtro
@@ -1055,6 +1151,951 @@ if 'results' in st.session_state:
             "📚 **Más información**: Para ver la lista completa de las 1,000 clases de ImageNet, "
             "visita [ImageNet Classes](https://deeplearning.cms.waikato.ac.nz/user-guide/class-maps/IMAGENET/)"
         )
+
+    # ===================================================================
+    # TAB 6: EXPERIMENTOS DE ABLACIÓN
+    # ===================================================================
+    with tab6:
+        st.markdown("## 🧪 Experimentos de Ablación")
+        st.markdown(
+            "Descubre qué tan importantes son las neuronas seleccionadas para la predicción del modelo. "
+            "Ejecuta experimentos de **knockout**, **aislamiento**, **amplificación** y **ruido** para entender su rol."
+        )
+
+        # Importar funciones necesarias
+        from utils_streamlit import run_ablation_experiment, get_imagenet_class_name
+        from filter_visualization import (
+            extract_filter_weights_rgb,
+        )
+
+        # ===================================================================
+        # SECCIÓN 1: CONFIGURACIÓN Y BASELINE
+        # ===================================================================
+        st.markdown("---")
+        st.markdown("### 🎯 Configuración del Experimento")
+
+        # Baseline en columnas compactas
+        col_base1, col_base2, col_base3 = st.columns(3)
+        baseline_class = get_imagenet_class_name(results['prediction'])
+
+        with col_base1:
+            st.metric("📊 Predicción Original", baseline_class)
+        with col_base2:
+            st.metric("🎯 Confianza", f"{results['confidence']:.1%}")
+        with col_base3:
+            st.metric("🔢 Clase ID", f"#{results['prediction']}")
+
+        st.markdown("")
+
+        # ═══════════════════════════════════════════════════════════════
+        # FORMULARIO: Evita recargas al cambiar configuración
+        # ═══════════════════════════════════════════════════════════════
+        with st.form("ablation_config_form"):
+            st.markdown("#### ⚙️ Configuración de Experimentos")
+
+            # Selector de neuronas y parámetros
+            col_selector, col_params = st.columns([2, 1])
+
+            with col_selector:
+                # Crear opciones con información útil
+                neuron_options = {
+                    neuron_idx: f"Filtro {neuron_idx} (#{results['top_neurons'].index(neuron_idx) + 1}) - "
+                    f"Media: {results['stats'][neuron_idx]['mean']:.2f}, "
+                    f"Sparsity: {results['stats'][neuron_idx]['sparsity']*100:.0f}%"
+                    for neuron_idx in results['top_neurons']
+                }
+
+                selected_neurons = st.multiselect(
+                    "🎯 Selecciona neurona(s) para experimentar:",
+                    options=list(neuron_options.keys()),
+                    format_func=lambda x: neuron_options[x],
+                    default=[results['top_neurons'][0]],
+                    help="Selecciona una o múltiples neuronas para analizar su importancia"
+                )
+
+            with col_params:
+                amp_factor = st.slider(
+                    "⚡ Factor de amplificación:",
+                    min_value=2.0,
+                    max_value=10.0,
+                    value=5.0,
+                    step=1.0,
+                    help="Factor de multiplicación para el experimento de amplificación"
+                )
+
+                noise_level = st.slider(
+                    "🌫️ Nivel de ruido:",
+                    min_value=0.1,
+                    max_value=2.0,
+                    value=0.5,
+                    step=0.1,
+                    help="Intensidad del ruido gaussiano"
+                )
+
+            # Botón único: aplica Y ejecuta
+            st.markdown("")
+
+            # Calcular total de experimentos
+            if selected_neurons:
+                total_exp = len(selected_neurons) * 4 + \
+                    (4 if len(selected_neurons) > 1 else 0)
+                button_text = f"🧪 Ejecutar los Experimentos"
+                button_help = f"Ejecutará {len(selected_neurons) * 4} individuales"
+                if len(selected_neurons) > 1:
+                    button_help += f" + 4 grupales"
+            else:
+                button_text = "🧪 Ejecutar Experimentos"
+                button_help = "Selecciona al menos una neurona primero"
+
+            execute_button = st.form_submit_button(
+                button_text,
+                type="primary",
+                use_container_width=True,
+                help=button_help
+            )
+
+        # ═══════════════════════════════════════════════════════════════
+        # VALIDACIÓN FUERA DEL FORM
+        # ═══════════════════════════════════════════════════════════════
+        if not selected_neurons:
+            st.warning("⚠️ Selecciona al menos una neurona en el formulario")
+            st.stop()
+
+        # Mostrar info de tipos de experimentos
+        with st.expander("ℹ️ ¿Qué hace cada experimento?", expanded=False):
+            col_info1, col_info2, col_info3, col_info4 = st.columns(4)
+            with col_info1:
+                st.markdown("**🔴 Knockout**")
+                st.caption("Apaga las neuronas para ver si son críticas")
+            with col_info2:
+                st.markdown("**🟢 Aislamiento**")
+                st.caption("Activa SOLO estas neuronas")
+            with col_info3:
+                st.markdown("**⚡ Amplificación**")
+                st.caption("Multiplica activaciones")
+            with col_info4:
+                st.markdown("**🌫️ Ruido**")
+                st.caption("Agrega ruido para probar robustez")
+
+        st.markdown("---")
+
+        # ===================================================================
+        # EJECUCIÓN DE EXPERIMENTOS
+        # ===================================================================
+        if execute_button:
+            # Estructura para almacenar resultados
+            experiments_results = {
+                'individual': {},
+                'group': {}
+            }
+
+            # Barra de progreso
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+
+            # Calcular total de experimentos
+            individual_experiments = len(selected_neurons) * 4
+            group_experiments = 4 if len(selected_neurons) > 1 else 0
+            total_experiments = individual_experiments + group_experiments
+
+            current_step = 0
+
+            # ---------------------------------------------------------------
+            # EXPERIMENTOS INDIVIDUALES
+            # ---------------------------------------------------------------
+            for neuron_idx in selected_neurons:
+                experiments_results['individual'][neuron_idx] = {}
+
+                # Knockout individual
+                status_text.text(f"🔴 Knockout - Filtro {neuron_idx}...")
+                result_ko = run_ablation_experiment(
+                    model=model,
+                    image=results['image_tensor'],
+                    target_layer=results['layer_name'],
+                    neuron_idx=neuron_idx,
+                    experiment_type='knockout',
+                    device=device
+                )
+                experiments_results['individual'][neuron_idx]['knockout'] = result_ko
+                current_step += 1
+                progress_bar.progress(current_step / total_experiments)
+
+                # Isolation individual
+                status_text.text(f"🟢 Aislamiento - Filtro {neuron_idx}...")
+                result_iso = run_ablation_experiment(
+                    model=model,
+                    image=results['image_tensor'],
+                    target_layer=results['layer_name'],
+                    neuron_idx=neuron_idx,
+                    experiment_type='isolation',
+                    device=device
+                )
+                experiments_results['individual'][neuron_idx]['isolation'] = result_iso
+                current_step += 1
+                progress_bar.progress(current_step / total_experiments)
+
+                # Amplification individual
+                status_text.text(f"⚡ Amplificación - Filtro {neuron_idx}...")
+                result_amp = run_ablation_experiment(
+                    model=model,
+                    image=results['image_tensor'],
+                    target_layer=results['layer_name'],
+                    neuron_idx=neuron_idx,
+                    experiment_type='amplify',
+                    amplification_factor=amp_factor,
+                    device=device
+                )
+                experiments_results['individual'][neuron_idx]['amplify'] = result_amp
+                current_step += 1
+                progress_bar.progress(current_step / total_experiments)
+
+                # Experimento 4: Noise individual
+                status_text.text(f"🌫️ Ruido - Filtro {neuron_idx}...")
+                result_noise = run_ablation_experiment(
+                    model=model,
+                    image=results['image_tensor'],
+                    target_layer=results['layer_name'],
+                    neuron_idx=neuron_idx,
+                    experiment_type='add_noise',
+                    noise_level=noise_level,
+                    device=device
+                )
+                experiments_results['individual'][neuron_idx]['noise'] = result_noise
+                current_step += 1
+                progress_bar.progress(current_step / total_experiments)
+
+            # ---------------------------------------------------------------
+            # EXPERIMENTOS GRUPALES (si hay múltiples neuronas)
+            # ---------------------------------------------------------------
+            if len(selected_neurons) > 1:
+                # Group Knockout
+                status_text.text(
+                    f"🔴 Knockout grupal - {len(selected_neurons)} neuronas...")
+                result_group_ko = run_ablation_experiment(
+                    model=model,
+                    image=results['image_tensor'],
+                    target_layer=results['layer_name'],
+                    neuron_idx=selected_neurons,
+                    experiment_type='group_knockout',
+                    device=device
+                )
+                experiments_results['group']['knockout'] = result_group_ko
+                current_step += 1
+                progress_bar.progress(current_step / total_experiments)
+
+                # Group Isolation
+                status_text.text(
+                    f"🟢 Aislamiento grupal - {len(selected_neurons)} neuronas...")
+                result_group_iso = run_ablation_experiment(
+                    model=model,
+                    image=results['image_tensor'],
+                    target_layer=results['layer_name'],
+                    neuron_idx=selected_neurons,
+                    experiment_type='group_isolation',
+                    device=device
+                )
+                experiments_results['group']['isolation'] = result_group_iso
+                current_step += 1
+                progress_bar.progress(current_step / total_experiments)
+
+                # Group Amplification
+                status_text.text(
+                    f"⚡ Amplificación grupal - {len(selected_neurons)} neuronas...")
+                result_group_amp = run_ablation_experiment(
+                    model=model,
+                    image=results['image_tensor'],
+                    target_layer=results['layer_name'],
+                    neuron_idx=selected_neurons,
+                    experiment_type='group_amplify',
+                    amplification_factor=amp_factor,
+                    device=device
+                )
+                experiments_results['group']['amplify'] = result_group_amp
+                current_step += 1
+                progress_bar.progress(current_step / total_experiments)
+
+                # Experimento grupal 4: Ruido del grupo completo
+                status_text.text(
+                    f"🌫️ Ruido grupal - {len(selected_neurons)} neuronas...")
+                result_group_noise = run_ablation_experiment(
+                    model=model,
+                    image=results['image_tensor'],
+                    target_layer=results['layer_name'],
+                    neuron_idx=selected_neurons,  # Lista completa
+                    experiment_type='group_noise',
+                    noise_level=noise_level,
+                    device=device
+                )
+                experiments_results['group']['noise'] = result_group_noise
+                current_step += 1
+                progress_bar.progress(current_step / total_experiments)
+
+            # Limpiar y guardar
+            progress_bar.empty()
+            status_text.empty()
+
+            st.session_state['ablation_results'] = experiments_results
+            st.session_state['ablation_neurons'] = selected_neurons
+            st.session_state['ablation_amp_factor'] = amp_factor
+            st.session_state['ablation_noise_level'] = noise_level
+
+            st.success(
+                f"✅ Completado: {len(selected_neurons)*4} individuales" +
+                (f" + 4 grupales" if len(selected_neurons) > 1 else "")
+            )
+
+        # ===================================================================
+        # MOSTRAR RESULTADOS (si existen)
+        # ===================================================================
+        if 'ablation_results' in st.session_state:
+
+            results_data = st.session_state['ablation_results']
+            tested_neurons = st.session_state['ablation_neurons']
+            amp_factor_used = st.session_state['ablation_amp_factor']
+            noise_level_used = st.session_state['ablation_noise_level']
+
+            st.markdown("---")
+            st.markdown("## 📊 Resultados de los Experimentos")
+
+            # ===============================================================
+            # SECCIÓN 2: COMPARACIÓN VISUAL
+            # ===============================================================
+            st.markdown("### 🔬 Comparación Visual: Original vs Ruido")
+
+            st.info(
+                f"Comparación visual de activaciones originales vs con ruido gaussiano. "
+                f"Nivel de ruido: ±{noise_level_used}"
+            )
+
+            # Crear figura con 2 filas: Original (arriba) y Con Ruido (abajo)
+            num_neurons = len(tested_neurons)
+            max_cols = min(4, num_neurons)
+
+            fig, axes = plt.subplots(
+                2, max_cols,
+                figsize=(3 * max_cols, 6)  # ← Reducido de 4x8 a 3x6
+            )
+
+            # Asegurar que axes sea 2D
+            if max_cols == 1:
+                axes = axes.reshape(2, 1)
+
+            # FILA 1: ACTIVACIONES ORIGINALES
+            for idx, neuron_idx in enumerate(tested_neurons[:max_cols]):
+                ax = axes[0, idx]
+
+                # Obtener activación original
+                act_map = results['activations'][0,
+                                                 neuron_idx, :, :].cpu().numpy()
+
+                # Normalizar activación
+                if act_map.max() > act_map.min():
+                    act_norm = (act_map - act_map.min()) / \
+                        (act_map.max() - act_map.min())
+                else:
+                    act_norm = act_map
+
+                # Mostrar heatmap
+                im = ax.imshow(
+                    act_norm,
+                    cmap='hot',  # ← Sin variable, valor fijo
+                    alpha=1.0
+                )
+
+                ax.set_title(
+                    f"📊 Original - Filtro {neuron_idx}",
+                    fontsize=12,
+                    fontweight='bold'
+                )
+                ax.axis('off')
+
+                plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+
+                ax.text(
+                    0.5, -0.1,
+                    f"Max: {act_map.max():.2f} | Mean: {act_map.mean():.2f}",
+                    transform=ax.transAxes,
+                    ha='center',
+                    fontsize=9,
+                    bbox=dict(boxstyle='round', facecolor='white', alpha=0.8)
+                )
+
+            # FILA 2: ACTIVACIONES CON RUIDO
+            for idx, neuron_idx in enumerate(tested_neurons[:max_cols]):
+                ax = axes[1, idx]
+
+                # Obtener activación original
+                act_map = results['activations'][0,
+                                                 neuron_idx, :, :].cpu().numpy()
+
+                # Agregar ruido gaussiano
+                act_std = act_map.std()
+                noise = np.random.randn(
+                    *act_map.shape) * act_std * noise_level_used
+                act_map_noisy = act_map + noise
+
+                # Normalizar activación con ruido
+                if act_map_noisy.max() > act_map_noisy.min():
+                    act_norm = (act_map_noisy - act_map_noisy.min()) / \
+                        (act_map_noisy.max() - act_map_noisy.min())
+                else:
+                    act_norm = act_map_noisy
+
+                # Mostrar heatmap
+                im = ax.imshow(
+                    act_norm,
+                    cmap='hot',  # ← Sin variable, valor fijo
+                    alpha=1.0
+                )
+
+                ax.set_title(
+                    f"🌫️ Con Ruido (±{noise_level_used}) - Filtro {neuron_idx}",
+                    fontsize=12,
+                    fontweight='bold'
+                )
+                ax.axis('off')
+
+                plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+
+                ax.text(
+                    0.5, -0.1,
+                    f"Max: {act_map_noisy.max():.2f} | Ruido: ±{act_std * noise_level_used:.2f}",
+                    transform=ax.transAxes,
+                    ha='center',
+                    fontsize=9,
+                    bbox=dict(boxstyle='round', facecolor='white', alpha=0.8)
+                )
+
+            plt.tight_layout()
+            st.pyplot(fig)
+            plt.close(fig)
+
+            # Mostrar resultado del experimento de ruido
+            st.markdown("---")
+            st.markdown("#### 🎯 Resultado del Experimento de Ruido")
+
+            # Obtener resultado de ruido
+            if len(tested_neurons) > 1:
+                if 'group' in results_data and 'noise' in results_data['group']:
+                    noise_result = results_data['group']['noise']
+                    result_type = "Resultado grupal"
+                else:
+                    noise_result = None
+            else:
+                noise_result = results_data['individual'][tested_neurons[0]]['noise']
+                result_type = "Resultado individual"
+
+            if noise_result:
+                noise_class = get_imagenet_class_name(
+                    noise_result['prediction'])
+                noise_change = noise_result['confidence'] - \
+                    results['confidence']
+
+                col_noise1, col_noise2, col_noise3 = st.columns(3)
+
+                with col_noise1:
+                    st.metric(
+                        "Predicción Original",
+                        baseline_class,
+                        help="Predicción sin ruido"
+                    )
+                    st.caption(f"Confianza: {results['confidence']:.1%}")
+
+                with col_noise2:
+                    st.metric(
+                        "Predicción con Ruido",
+                        noise_class,
+                        help="Predicción con ruido en activaciones"
+                    )
+                    st.caption(f"Confianza: {noise_result['confidence']:.1%}")
+
+                with col_noise3:
+                    st.metric(
+                        "Cambio en Confianza",
+                        f"{noise_result['confidence']:.1%}",
+                        delta=f"{noise_change:+.1%}"
+                    )
+
+                    # Clasificación de robustez
+                    if abs(noise_change) < 0.05:
+                        st.success("🟢 **Muy Robusta**")
+                    elif abs(noise_change) < 0.10:
+                        st.info("🟡 **Robusta**")
+                    elif abs(noise_change) < 0.15:
+                        st.warning("🟠 **Sensible**")
+                    else:
+                        st.error("🔴 **Muy Sensible**")
+
+                # Interpretación detallada
+                st.markdown("")
+                if noise_result['prediction'] == results['prediction']:
+                    st.success(
+                        f"✅ **Mantiene la clase:** Aunque se agregó ruido (±{noise_level_used}), "
+                        f"el modelo sigue prediciendo '{noise_class}'. "
+                        f"{'Las neuronas son robustas.' if abs(noise_change) < 0.10 else 'Hay cierta sensibilidad al ruido.'}"
+                    )
+                else:
+                    st.error(
+                        f"❌ **Cambió de clase:** El ruido (±{noise_level_used}) causó que la predicción "
+                        f"cambiara de '{baseline_class}' a '{noise_class}'. "
+                        "Las neuronas son muy sensibles a perturbaciones."
+                    )
+            # ---------------------------------------------------------------
+            # VIZ TAB 2: Mapas Individuales (Grid)
+            # ---------------------------------------------------------------
+            # with viz_tab2:
+            #     st.info(
+            #         "Vista completa de los mapas de activación de todas las neuronas seleccionadas"
+            #     )
+
+            #     # Colormap selector
+            #     im = ax.imshow(
+            #         act_norm,
+            #         cmap=viz_cmap_grid,  # ← Usa el selector
+            #         alpha=1.0             # ← Sin transparencia
+            #     )
+
+            #     # Crear grid de activaciones
+            #     from utils_streamlit import create_filter_grid
+
+            #     fig_grid = create_filter_grid(
+            #         activations=results['activations'],
+            #         neuron_indices=tested_neurons,
+            #         image_vis=results['img_vis'],
+            #         max_cols=min(4, len(tested_neurons)),
+            #         cmap=viz_cmap_grid
+            #     )
+            #     st.pyplot(fig_grid)
+            #     plt.close(fig_grid)
+
+            # ===============================================================
+            # SECCIÓN 3: RESULTADOS DE EXPERIMENTOS
+            # ===============================================================
+            st.markdown("---")
+            st.markdown("### 📈 Resultados de Experimentos")
+
+            # Tabs internos para resultados
+            if len(tested_neurons) > 1:
+                results_tab1, results_tab2, results_tab3 = st.tabs([
+                    "👥 Resultados Grupales",
+                    "🔢 Resultados Individuales",
+                    "📊 Comparación Detallada"
+                ])
+            else:
+                # Si solo hay 1 neurona, no mostrar tab grupal
+                results_tab2, results_tab3 = st.tabs([
+                    "🔢 Resultados Individuales",
+                    "📊 Comparación Detallada"
+                ])
+                results_tab1 = None
+
+            # ---------------------------------------------------------------
+            # RESULTS TAB 1: Resultados Grupales
+            # ---------------------------------------------------------------
+            if results_tab1 is not None:
+                with results_tab1:
+                    st.info(
+                        f"📌 Analizando {len(tested_neurons)} neuronas como grupo: {tested_neurons}")
+
+                    # Obtener resultados grupales
+                    group_ko = results_data['group']['knockout']
+                    group_iso = results_data['group']['isolation']
+                    group_amp = results_data['group']['amplify']
+                    group_noise = results_data['group']['noise']
+
+                    # Tabla resumen de 4 experimentos
+                    import pandas as pd
+
+                    summary_data = {
+                        'Experimento': ['🔵 Original', '🟢 Aislamiento', '⚡ Amplificación', '🌫️ Ruido', '🔴 Knockout'],
+                        'Predicción': [
+                            baseline_class,
+                            get_imagenet_class_name(group_iso['prediction']),
+                            get_imagenet_class_name(group_amp['prediction']),
+                            get_imagenet_class_name(group_noise['prediction']),
+                            get_imagenet_class_name(group_ko['prediction'])
+                        ],
+                        'Confianza': [
+                            f"{results['confidence']:.1%}",
+                            f"{group_iso['confidence']:.1%}",
+                            f"{group_amp['confidence']:.1%}",
+                            f"{group_noise['confidence']:.1%}",
+                            f"{group_ko['confidence']:.1%}"
+                        ],
+                        'Δ Cambio': [
+                            '-',
+                            f"{(group_iso['confidence'] - results['confidence']):+.1%}",
+                            f"{(group_amp['confidence'] - results['confidence']):+.1%}",
+                            f"{(group_noise['confidence'] - results['confidence']):+.1%}",
+                            f"{(group_ko['confidence'] - results['confidence']):+.1%}"
+                        ],
+                        'Estado': [
+                            '🔵 Base',
+                            '✅' if group_iso['prediction'] == results['prediction'] else '❌ Cambió',
+                            '✅' if group_amp['prediction'] == results['prediction'] else '❌ Cambió',
+                            '✅' if group_noise['prediction'] == results['prediction'] else '❌ Cambió',
+                            '✅' if group_ko['prediction'] == results['prediction'] else '❌ Cambió'
+                        ]
+                    }
+
+                    df_summary = pd.DataFrame(summary_data)
+                    st.dataframe(
+                        df_summary, use_container_width=True, hide_index=True)
+
+                    st.markdown("---")
+
+                    # Análisis de sinergia
+                    st.markdown("#### 🔬 Análisis de Sinergia")
+
+                    # Calcular suma de efectos individuales
+                    sum_individual_ko_changes = sum([
+                        abs(results_data['individual'][n]['knockout']
+                            ['confidence'] - results['confidence'])
+                        for n in tested_neurons
+                    ])
+
+                    ko_change = group_ko['confidence'] - results['confidence']
+                    group_ko_change = abs(ko_change)
+
+                    col_syn1, col_syn2 = st.columns(2)
+                    with col_syn1:
+                        st.metric("Efecto Grupal (Knockout)",
+                                  f"{group_ko_change:.1%}")
+                    with col_syn2:
+                        st.metric("Suma Efectos Individuales",
+                                  f"{sum_individual_ko_changes:.1%}")
+
+                    # Interpretación
+                    if group_ko_change > sum_individual_ko_changes * 1.2:
+                        st.success(
+                            "🔗 **Sinergia positiva**: El grupo tiene más impacto que la suma de individuales"
+                        )
+                    elif group_ko_change < sum_individual_ko_changes * 0.5:
+                        st.warning(
+                            "🔀 **Redundancia**: El grupo tiene menos impacto (neuronas redundantes)"
+                        )
+                    else:
+                        st.info(
+                            "➡️ **Efecto aditivo**: El grupo suma aproximadamente los efectos individuales"
+                        )
+
+                    # Interpretación de importancia
+                    st.markdown("---")
+                    st.markdown("#### 💡 Importancia del Grupo")
+
+                    if abs(ko_change) > 0.2:
+                        st.error(
+                            "🔥 **Grupo crítico**: Eliminarlo cambia drásticamente la predicción")
+                    elif abs(ko_change) > 0.1:
+                        st.warning(
+                            "⚡ **Grupo importante**: Tiene impacto significativo")
+                    else:
+                        st.info(
+                            "💤 **Grupo redundante**: El modelo compensa fácilmente")
+
+                    if group_iso['confidence'] > 0.5:
+                        st.success(
+                            "🎯 **Suficientes por sí solas**: Este grupo es altamente determinante")
+                    elif group_iso['confidence'] > 0.3:
+                        st.info(
+                            "⚖️ **Contribuyentes fuertes**: Aportan información significativa")
+
+            # ---------------------------------------------------------------
+            # RESULTS TAB 2: Resultados Individuales
+            # ---------------------------------------------------------------
+            with results_tab2:
+                st.markdown("#### 🔍 Tabla Comparativa por Neurona")
+
+                # Tabla comparativa
+                import pandas as pd
+
+                comparison_data = []
+                for neuron_idx in tested_neurons:
+                    ko_result = results_data['individual'][neuron_idx]['knockout']
+                    iso_result = results_data['individual'][neuron_idx]['isolation']
+                    amp_result = results_data['individual'][neuron_idx]['amplify']
+
+                    ko_change = ko_result['confidence'] - results['confidence']
+                    amp_change = amp_result['confidence'] - \
+                        results['confidence']
+
+                    noise_result = results_data['individual'][neuron_idx]['noise']
+                    noise_change = noise_result['confidence'] - \
+                        results['confidence']
+
+                    comparison_data.append({
+                        'Filtro': neuron_idx,
+                        'Rank': f"#{tested_neurons.index(neuron_idx) + 1}",
+                        'Sparsity': f"{results['stats'][neuron_idx]['sparsity']*100:.0f}%",
+                        'KO': f"{ko_result['confidence']:.1%}",
+                        'Δ KO': f"{ko_change:+.1%}",
+                        'ISO': f"{iso_result['confidence']:.1%}",
+                        'AMP': f"{amp_result['confidence']:.1%}",
+                        'Δ AMP': f"{amp_change:+.1%}",
+                        'NOISE': f"{noise_result['confidence']:.1%}",
+                        'Δ NOISE': f"{noise_change:+.1%}"
+                    })
+
+                df_comparison = pd.DataFrame(comparison_data)
+                st.dataframe(
+                    df_comparison, use_container_width=True, hide_index=True)
+
+                st.markdown("---")
+                st.markdown("#### 📋 Detalles por Neurona")
+
+                # Expanders con detalles
+                for neuron_idx in tested_neurons:
+                    with st.expander(f"🔍 Filtro {neuron_idx} - Análisis Detallado", expanded=False):
+                        ko_result = results_data['individual'][neuron_idx]['knockout']
+                        iso_result = results_data['individual'][neuron_idx]['isolation']
+                        amp_result = results_data['individual'][neuron_idx]['amplify']
+                        noise_result = results_data['individual'][neuron_idx]['noise']
+
+                        col_det1, col_det2, col_det3, col_det4 = st.columns(4)
+
+                        # Knockout
+                        with col_det1:
+                            st.markdown("**🔴 Knockout**")
+                            ko_change = ko_result['confidence'] - \
+                                results['confidence']
+                            st.metric(
+                                "Confianza", f"{ko_result['confidence']:.1%}", delta=f"{ko_change:.1%}")
+
+                            if abs(ko_change) > 0.1:
+                                st.caption("⚡ Importante")
+                            else:
+                                st.caption("💤 Redundante")
+
+                        # Isolation
+                        with col_det2:
+                            st.markdown("**🟢 Aislamiento**")
+                            st.metric(
+                                "Confianza", f"{iso_result['confidence']:.1%}")
+
+                            if iso_result['confidence'] > 0.3:
+                                st.caption("🎯 Determinante")
+                            else:
+                                st.caption("⚖️ Contribuyente")
+
+                        # Amplification
+                        with col_det3:
+                            st.markdown("**⚡ Amplificación**")
+                            amp_change = amp_result['confidence'] - \
+                                results['confidence']
+                            st.metric(
+                                "Confianza", f"{amp_result['confidence']:.1%}", delta=f"{amp_change:.1%}")
+
+                            if amp_change > 0.05:
+                                st.caption("📈 Efectiva")
+                            else:
+                                st.caption("➡️ Sin efecto")
+
+                        # Noise
+                        with col_det4:
+                            st.markdown("**🌫️ Ruido**")
+                            noise_change = noise_result['confidence'] - \
+                                results['confidence']
+                            st.metric(
+                                "Confianza", f"{noise_result['confidence']:.1%}", delta=f"{noise_change:.1%}")
+
+                            if abs(noise_change) > 0.1:
+                                st.caption("🔴 Sensible")
+                            else:
+                                st.caption("🟢 Robusta")
+
+            # ---------------------------------------------------------------
+            # RESULTS TAB 3: Comparación Detallada
+            # ---------------------------------------------------------------
+            with results_tab3:
+                st.markdown(
+                    "#### 📊 Resumen Completo de Todos los Experimentos")
+
+                import pandas as pd
+
+                # Crear tabla completa con todos los datos
+                detailed_data = []
+
+                # Agregar datos individuales
+                for neuron_idx in tested_neurons:
+                    ko = results_data['individual'][neuron_idx]['knockout']
+                    iso = results_data['individual'][neuron_idx]['isolation']
+                    amp = results_data['individual'][neuron_idx]['amplify']
+
+                    detailed_data.append({
+                        'Tipo': 'Individual',
+                        'Neurona(s)': f"Filtro {neuron_idx}",
+                        'Experimento': 'Knockout',
+                        'Predicción': get_imagenet_class_name(ko['prediction']),
+                        'Confianza': f"{ko['confidence']:.1%}",
+                        'Δ': f"{(ko['confidence'] - results['confidence']):+.1%}",
+                        'Estado': '✅ Mantiene' if ko['prediction'] == results['prediction'] else '❌ Cambió'
+                    })
+                    detailed_data.append({
+                        'Tipo': 'Individual',
+                        'Neurona(s)': f"Filtro {neuron_idx}",
+                        'Experimento': 'Aislamiento',
+                        'Predicción': get_imagenet_class_name(iso['prediction']),
+                        'Confianza': f"{iso['confidence']:.1%}",
+                        'Δ': f"{(iso['confidence'] - results['confidence']):+.1%}",
+                        'Estado': '✅ Mantiene' if ko['prediction'] == results['prediction'] else '❌ Cambió'
+                    })
+                    detailed_data.append({
+                        'Tipo': 'Individual',
+                        'Neurona(s)': f"Filtro {neuron_idx}",
+                        'Experimento': 'Amplificación',
+                        'Predicción': get_imagenet_class_name(amp['prediction']),
+                        'Confianza': f"{amp['confidence']:.1%}",
+                        'Δ': f"{(amp['confidence'] - results['confidence']):+.1%}",
+                        'Estado': '✅ Mantiene' if ko['prediction'] == results['prediction'] else '❌ Cambió'
+                    })
+
+                # Agregar datos grupales si existen
+                if len(tested_neurons) > 1 and 'group' in results_data:
+                    group_ko = results_data['group']['knockout']
+                    group_iso = results_data['group']['isolation']
+                    group_amp = results_data['group']['amplify']
+
+                    neurons_str = f"{len(tested_neurons)} neuronas"
+
+                    detailed_data.append({
+                        'Tipo': 'Grupal',
+                        'Neurona(s)': neurons_str,
+                        'Experimento': 'Knockout',
+                        'Predicción': get_imagenet_class_name(group_ko['prediction']),
+                        'Confianza': f"{group_ko['confidence']:.1%}",
+                        'Δ': f"{(group_ko['confidence'] - results['confidence']):+.1%}",
+                        'Estado': '✅ Mantiene' if ko['prediction'] == results['prediction'] else '❌ Cambió'
+                    })
+                    detailed_data.append({
+                        'Tipo': 'Grupal',
+                        'Neurona(s)': neurons_str,
+                        'Experimento': 'Aislamiento',
+                        'Predicción': get_imagenet_class_name(group_iso['prediction']),
+                        'Confianza': f"{group_iso['confidence']:.1%}",
+                        'Δ': f"{(group_iso['confidence'] - results['confidence']):+.1%}",
+                        'Estado': '✅ Mantiene' if ko['prediction'] == results['prediction'] else '❌ Cambió'
+                    })
+                    detailed_data.append({
+                        'Tipo': 'Grupal',
+                        'Neurona(s)': neurons_str,
+                        'Experimento': 'Amplificación',
+                        'Predicción': get_imagenet_class_name(group_amp['prediction']),
+                        'Confianza': f"{group_amp['confidence']:.1%}",
+                        'Δ': f"{(group_amp['confidence'] - results['confidence']):+.1%}",
+                        'Estado': '✅ Mantiene' if ko['prediction'] == results['prediction'] else '❌ Cambió'
+                    })
+
+                df_detailed = pd.DataFrame(detailed_data)
+                st.dataframe(
+                    df_detailed, use_container_width=True, hide_index=True)
+
+                # Botón de descarga
+                csv = df_detailed.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    label="📥 Descargar resultados (CSV)",
+                    data=csv,
+                    file_name="ablation_results.csv",
+                    mime="text/csv"
+                )
+
+            # ===============================================================
+            # SECCIÓN 4: INTERPRETACIÓN Y CONCLUSIONES
+            # ===============================================================
+            st.markdown("---")
+            st.markdown("### 💡 Interpretación y Conclusiones")
+
+            # Análisis automático
+            col_concl1, col_concl2 = st.columns(2)
+
+            with col_concl1:
+                st.markdown("#### 🏆 Neuronas Más Importantes")
+
+                # Encontrar neurona con mayor impacto en knockout
+                max_ko_impact = 0
+                most_important = None
+
+                for neuron_idx in tested_neurons:
+                    ko_change = abs(
+                        results_data['individual'][neuron_idx]['knockout']['confidence'] - results['confidence'])
+                    if ko_change > max_ko_impact:
+                        max_ko_impact = ko_change
+                        most_important = neuron_idx
+
+                if most_important:
+                    st.success(f"🥇 **Filtro {most_important}**")
+                    st.caption(f"Impacto en knockout: {max_ko_impact:.1%}")
+
+                # Lista de neuronas críticas
+                critical_neurons = [
+                    n for n in tested_neurons
+                    if abs(results_data['individual'][n]['knockout']['confidence'] - results['confidence']) > 0.1
+                ]
+
+                if critical_neurons:
+                    st.info(f"⚡ **Neuronas críticas**: {critical_neurons}")
+                else:
+                    st.warning("💤 Ninguna neurona individual es crítica")
+
+            with col_concl2:
+                st.markdown("#### 📋 Resumen Ejecutivo")
+
+                # Contar tipos de neuronas
+                important = sum([
+                    1 for n in tested_neurons
+                    if abs(results_data['individual'][n]['knockout']['confidence'] - results['confidence']) > 0.1
+                ])
+
+                determinant = sum([
+                    1 for n in tested_neurons
+                    if results_data['individual'][n]['isolation']['confidence'] > 0.3
+                ])
+
+                effective_amp = sum([
+                    1 for n in tested_neurons
+                    if (results_data['individual'][n]['amplify']['confidence'] - results['confidence']) > 0.05
+                ])
+
+                st.metric("Neuronas Importantes",
+                          f"{important}/{len(tested_neurons)}")
+                st.metric("Neuronas Determinantes",
+                          f"{determinant}/{len(tested_neurons)}")
+                st.metric("Amplificación Efectiva",
+                          f"{effective_amp}/{len(tested_neurons)}")
+
+            # Recomendación final
+            st.markdown("---")
+
+            if len(tested_neurons) > 1 and 'group' in results_data:
+                group_ko_change = abs(
+                    results_data['group']['knockout']['confidence'] - results['confidence'])
+
+                if group_ko_change > 0.2:
+                    st.error(
+                        "🔥 **Conclusión**: Este grupo de neuronas es **CRÍTICO** para la predicción. "
+                        "Eliminarlas cambia drásticamente el resultado del modelo."
+                    )
+                elif group_ko_change > 0.1:
+                    st.warning(
+                        "⚡ **Conclusión**: Este grupo de neuronas es **IMPORTANTE**. "
+                        "Contribuyen significativamente a la predicción final."
+                    )
+                else:
+                    st.success(
+                        "✅ **Conclusión**: Este grupo de neuronas es **REDUNDANTE**. "
+                        "El modelo puede compensar su ausencia fácilmente."
+                    )
+            else:
+                # Conclusión individual
+                if most_important and max_ko_impact > 0.1:
+                    st.warning(
+                        f"⚡ **Conclusión**: El Filtro {most_important} es importante "
+                        f"(impacto: {max_ko_impact:.1%}), pero no crítico para la predicción."
+                    )
+                else:
+                    st.success(
+                        "✅ **Conclusión**: Las neuronas seleccionadas son redundantes. "
+                        "El modelo distribuye la información en múltiples neuronas."
+                    )
 
 else:
     st.info(
