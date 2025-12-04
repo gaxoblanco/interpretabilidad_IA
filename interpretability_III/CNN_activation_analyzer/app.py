@@ -3,6 +3,7 @@ Dashboard de Análisis de Activaciones de CNN
 Aplicación Streamlit para visualizar activaciones de ResNet18 y AlexNet
 """
 
+import os
 import streamlit as st
 import torch
 import torch.nn as nn
@@ -25,6 +26,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+os.environ['STREAMLIT_SERVER_HEADLESS'] = 'true'
 
 # Título principal
 st.title("🔬 Analizador de Activaciones de CNN")

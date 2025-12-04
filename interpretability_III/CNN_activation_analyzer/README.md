@@ -1,3 +1,14 @@
+---
+title: CNN Activation Analyzer
+emoji: 🔬
+colorFrom: blue
+colorTo: purple
+sdk: streamlit
+sdk_version: 1.31.0
+app_file: app.py
+pinned: false
+---
+
 # 🔬 Analizador de Activaciones de CNN
 
 Aplicación interactiva desarrollada con **Streamlit** para visualizar y analizar las activaciones internas de redes neuronales convolucionales (ResNet18 y AlexNet). Permite entender qué patrones detecta cada capa de la red y cómo se activan los filtros convolucionales ante diferentes imágenes.
