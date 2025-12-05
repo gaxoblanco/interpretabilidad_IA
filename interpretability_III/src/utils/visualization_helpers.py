@@ -25,7 +25,7 @@ def plot_feature_grid(
 ):
     """
     Visualiza grid de features generadas
-    
+
     Args:
         images: Lista de imágenes [H, W, 3]
         neuron_indices: Lista de índices de neuronas
@@ -36,10 +36,10 @@ def plot_feature_grid(
     """
     n_images = len(images)
     nrows = (n_images + ncols - 1) // ncols
-    
+
     fig, axes = plt.subplots(nrows, ncols, figsize=figsize)
     axes = axes.flatten() if n_images > 1 else [axes]
-    
+
     for i, (img, neuron_idx) in enumerate(zip(images, neuron_indices)):
         axes[i].imshow(img)
         axes[i].set_title(
@@ -48,11 +48,11 @@ def plot_feature_grid(
             fontweight='bold'
         )
         axes[i].axis('off')
-    
+
     # Ocultar axes vacíos
     for i in range(n_images, len(axes)):
         axes[i].axis('off')
-    
+
     plt.suptitle(
         f'Feature Visualization - {layer_name}\n'
         f'(Imágenes que maximizan activación)',
@@ -60,13 +60,13 @@ def plot_feature_grid(
         fontweight='bold',
         y=0.98
     )
-    
+
     plt.tight_layout()
-    
+
     if save_path:
         plt.savefig(save_path, dpi=150, bbox_inches='tight')
         print(f"💾 Grid guardado en: {save_path}")
-    
+
     plt.show()
 
 
@@ -77,14 +77,14 @@ def plot_convergence(
 ):
     """
     Visualiza curvas de convergencia durante optimización
-    
+
     Args:
         histories: Lista de historiales con pérdidas
         neuron_indices: Índices de neuronas
         figsize: Tamaño de figura
     """
     fig, axes = plt.subplots(1, 3, figsize=figsize)
-    
+
     # Plot 1: Activación
     for history, neuron_idx in zip(histories, neuron_indices):
         axes[0].plot(
@@ -97,7 +97,7 @@ def plot_convergence(
     axes[0].set_ylabel('Activación')
     axes[0].legend(fontsize=8)
     axes[0].grid(True, alpha=0.3)
-    
+
     # Plot 2: L2 Loss
     for history, neuron_idx in zip(histories, neuron_indices):
         axes[1].plot(
@@ -110,7 +110,7 @@ def plot_convergence(
     axes[1].set_ylabel('L2 Loss')
     axes[1].legend(fontsize=8)
     axes[1].grid(True, alpha=0.3)
-    
+
     # Plot 3: Total Variation
     for history, neuron_idx in zip(histories, neuron_indices):
         axes[2].plot(
@@ -123,13 +123,13 @@ def plot_convergence(
     axes[2].set_ylabel('TV Loss')
     axes[2].legend(fontsize=8)
     axes[2].grid(True, alpha=0.3)
-    
+
     plt.suptitle(
         'Convergencia de Feature Optimization',
         fontsize=14,
         fontweight='bold'
     )
-    
+
     plt.tight_layout()
     plt.show()
 
@@ -140,26 +140,27 @@ def plot_real_vs_synthetic(
 ):
     """
     Compara imagen real vs sintética y sus activaciones
-    
+
     Args:
         comparison_results: Resultado de compare_real_vs_synthetic()
         figsize: Tamaño de figura
     """
     fig = plt.figure(figsize=figsize)
     gs = GridSpec(2, 3, figure=fig, hspace=0.3, wspace=0.3)
-    
+
     # Imagen real
     ax1 = fig.add_subplot(gs[0, 0])
     ax1.imshow(comparison_results['real_image'])
     ax1.set_title('Imagen Real', fontsize=12, fontweight='bold')
     ax1.axis('off')
-    
+
     # Imagen sintética
     ax2 = fig.add_subplot(gs[0, 1])
     ax2.imshow(comparison_results['synthetic_image'])
-    ax2.set_title('Imagen Sintética Optimizada', fontsize=12, fontweight='bold')
+    ax2.set_title('Imagen Sintética Optimizada',
+                  fontsize=12, fontweight='bold')
     ax2.axis('off')
-    
+
     # Diferencia
     ax3 = fig.add_subplot(gs[0, 2])
     real_gray = np.mean(comparison_results['real_image'], axis=2)
@@ -168,14 +169,14 @@ def plot_real_vs_synthetic(
     ax3.imshow(diff, cmap='hot')
     ax3.set_title('Diferencia Absoluta', fontsize=12, fontweight='bold')
     ax3.axis('off')
-    
+
     # Comparación de activaciones
     ax4 = fig.add_subplot(gs[1, :])
-    
+
     real_act = comparison_results['real_activation']
     synth_act = comparison_results['synthetic_activation']
     improvement = comparison_results['improvement']
-    
+
     bars = ax4.bar(
         ['Imagen Real', 'Imagen Sintética'],
         [real_act, synth_act],
@@ -184,7 +185,7 @@ def plot_real_vs_synthetic(
         edgecolor='black',
         linewidth=2
     )
-    
+
     ax4.set_ylabel('Activación', fontsize=11, fontweight='bold')
     ax4.set_title(
         f'Comparación de Activaciones (Mejora: {improvement:.2f}x)',
@@ -192,7 +193,7 @@ def plot_real_vs_synthetic(
         fontweight='bold'
     )
     ax4.grid(True, axis='y', alpha=0.3)
-    
+
     # Añadir valores sobre barras
     for bar in bars:
         height = bar.get_height()
@@ -205,22 +206,22 @@ def plot_real_vs_synthetic(
             fontsize=10,
             fontweight='bold'
         )
-    
+
     plt.suptitle(
         '🔍 Real vs Sintética: ¿Qué activa más la neurona?',
         fontsize=14,
         fontweight='bold',
         y=0.98
     )
-    
+
     plt.show()
-    
+
     # Print interpretación
     print(f"\n💡 INTERPRETACIÓN:")
     print(f"   Activación real:      {real_act:.4f}")
     print(f"   Activación sintética: {synth_act:.4f}")
     print(f"   Mejora:               {improvement:.2f}x")
-    
+
     if improvement > 2:
         print(f"\n   ✅ La imagen sintética activa MUCHO MÁS la neurona")
         print(f"      → La neurona busca patrones específicos presentes en sintética")
@@ -238,17 +239,17 @@ def plot_layer_comparison(
 ):
     """
     Compara features de la misma neurona en diferentes capas
-    
+
     Args:
         layer_results: {layer_name: [images]}
         neuron_idx: Índice de neurona a comparar
         figsize: Tamaño de figura
     """
     n_layers = len(layer_results)
-    
+
     fig, axes = plt.subplots(1, n_layers, figsize=figsize)
     axes = axes if n_layers > 1 else [axes]
-    
+
     for ax, (layer_name, images) in zip(axes, layer_results.items()):
         ax.imshow(images[neuron_idx])
         ax.set_title(
@@ -257,13 +258,13 @@ def plot_layer_comparison(
             fontweight='bold'
         )
         ax.axis('off')
-    
+
     plt.suptitle(
         f'Comparación entre capas - Neurona {neuron_idx}',
         fontsize=14,
         fontweight='bold'
     )
-    
+
     plt.tight_layout()
     plt.show()
 
@@ -277,7 +278,7 @@ def save_feature_collection(
 ):
     """
     Guarda colección de features en disco
-    
+
     Args:
         images: Lista de imágenes
         neuron_indices: Índices de neuronas
@@ -286,18 +287,18 @@ def save_feature_collection(
         prefix: Prefijo de archivos
     """
     from PIL import Image
-    
+
     save_path = Path(save_dir)
     save_path.mkdir(parents=True, exist_ok=True)
-    
+
     print(f"\n💾 Guardando {len(images)} features en: {save_path}")
-    
+
     for img, neuron_idx in zip(images, neuron_indices):
         filename = f"{prefix}_{layer_name}_neuron{neuron_idx:04d}.png"
         filepath = save_path / filename
-        
+
         Image.fromarray(img).save(filepath)
-    
+
     print(f"✅ Features guardadas")
 
 
@@ -310,7 +311,7 @@ def plot_diverse_features(
 ):
     """
     Visualiza features con estadísticas de diversidad
-    
+
     Args:
         images: Lista de imágenes
         neuron_indices: Índices de neuronas
@@ -321,31 +322,31 @@ def plot_diverse_features(
     n_images = len(images)
     ncols = 4
     nrows = (n_images + ncols - 1) // ncols
-    
+
     fig, axes = plt.subplots(nrows, ncols, figsize=figsize)
     axes = axes.flatten() if n_images > 1 else [axes]
-    
+
     for i, (img, neuron_idx, stat) in enumerate(zip(images, neuron_indices, stats)):
         axes[i].imshow(img)
-        
+
         # Título con stats
         title = (f'Neurona {neuron_idx}\n'
-                f'Act: {stat.get("activation", 0):.3f}')
-        
+                 f'Act: {stat.get("activation", 0):.3f}')
+
         axes[i].set_title(title, fontsize=9)
         axes[i].axis('off')
-    
+
     # Ocultar axes vacíos
     for i in range(n_images, len(axes)):
         axes[i].axis('off')
-    
+
     plt.suptitle(
         f'Feature Diversity - {layer_name}',
         fontsize=14,
         fontweight='bold',
         y=0.98
     )
-    
+
     plt.tight_layout()
     plt.show()
 
@@ -356,7 +357,7 @@ def create_summary_report(
 ):
     """
     Crea reporte resumen de experimento de feature visualization
-    
+
     Args:
         results: Diccionario con todos los resultados
         save_path: Ruta para guardar reporte
@@ -365,26 +366,30 @@ def create_summary_report(
     report.append("=" * 70)
     report.append("FEATURE VISUALIZATION - REPORTE RESUMEN")
     report.append("=" * 70)
-    
+
     report.append(f"\n📊 CONFIGURACIÓN:")
     report.append(f"   Modelo:       {results.get('model_name', 'N/A')}")
     report.append(f"   Capa:         {results.get('layer_name', 'N/A')}")
     report.append(f"   Neuronas:     {results.get('n_neurons', 'N/A')}")
     report.append(f"   Iteraciones:  {results.get('iterations', 'N/A')}")
-    
+
     if 'statistics' in results:
         stats = results['statistics']
         report.append(f"\n📈 ESTADÍSTICAS:")
-        report.append(f"   Activación media:  {stats.get('mean_activation', 0):.4f}")
-        report.append(f"   Activación máxima: {stats.get('max_activation', 0):.4f}")
-        report.append(f"   Activación mínima: {stats.get('min_activation', 0):.4f}")
-        report.append(f"   Desviación std:    {stats.get('std_activation', 0):.4f}")
-    
+        report.append(
+            f"   Activación media:  {stats.get('mean_activation', 0):.4f}")
+        report.append(
+            f"   Activación máxima: {stats.get('max_activation', 0):.4f}")
+        report.append(
+            f"   Activación mínima: {stats.get('min_activation', 0):.4f}")
+        report.append(
+            f"   Desviación std:    {stats.get('std_activation', 0):.4f}")
+
     report.append("\n" + "=" * 70)
-    
+
     report_text = "\n".join(report)
     print(report_text)
-    
+
     if save_path:
         with open(save_path, 'w') as f:
             f.write(report_text)
@@ -398,14 +403,14 @@ def plot_optimization_progress(
 ):
     """
     Visualiza progreso detallado de optimización de una neurona
-    
+
     Args:
         history: Historial de una neurona
         neuron_idx: Índice de neurona
         figsize: Tamaño de figura
     """
     fig, axes = plt.subplots(1, 4, figsize=figsize)
-    
+
     # Activación
     axes[0].plot(history['activation'], linewidth=2, color='#2ecc71')
     axes[0].set_title('Activación', fontweight='bold')
@@ -417,30 +422,92 @@ def plot_optimization_progress(
         alpha=0.3,
         color='#2ecc71'
     )
-    
+
     # L2 Loss
     axes[1].plot(history['l2_loss'], linewidth=2, color='#e74c3c')
     axes[1].set_title('L2 Loss', fontweight='bold')
     axes[1].set_xlabel('Iteración')
     axes[1].grid(True, alpha=0.3)
-    
+
     # TV Loss
     axes[2].plot(history['tv_loss'], linewidth=2, color='#3498db')
     axes[2].set_title('Total Variation', fontweight='bold')
     axes[2].set_xlabel('Iteración')
     axes[2].grid(True, alpha=0.3)
-    
+
     # Total Loss
     axes[3].plot(history['total_loss'], linewidth=2, color='#9b59b6')
     axes[3].set_title('Total Loss', fontweight='bold')
     axes[3].set_xlabel('Iteración')
     axes[3].grid(True, alpha=0.3)
-    
+
     plt.suptitle(
         f'Progreso de Optimización - Neurona {neuron_idx}',
         fontsize=14,
         fontweight='bold'
     )
-    
+
     plt.tight_layout()
     plt.show()
+
+
+def find_active_neurons(model, target_layer, device, top_k=10, test_iterations=50, visualizer=None):
+    """
+    Prueba todas las neuronas de una capa y retorna las más activas
+
+    Args:
+        model: Modelo
+        target_layer: Capa a analizar
+        device: Device
+        top_k: Cuántas neuronas retornar
+        test_iterations: Iteraciones de prueba por neurona
+        visualizer: Instancia de FeatureVisualizer (opcional)
+
+    Returns:
+        List de (neuron_idx, activacion_promedio)
+    """
+    print(f"🔍 Analizando capa: {target_layer}")
+
+    # Si se pasa un visualizer, usarlo; si no, crear uno nuevo
+    if visualizer is not None and visualizer.target_layer == target_layer:
+        vis = visualizer  # ← Usar el existente
+        cleanup_after = False
+    else:
+        from src.utils.feature_visualizer import FeatureVisualizer  # ← Importar la clase
+        vis = FeatureVisualizer(model, target_layer, device)  # ← Crear nuevo
+        cleanup_after = True
+
+    # Obtener número de neuronas en la capa
+    layer_module = dict(model.named_modules())[target_layer]
+    num_neurons = layer_module.out_channels
+
+    print(f"   Total neuronas: {num_neurons}")
+    print(f"   Probando con {test_iterations} iteraciones cada una...")
+
+    results = []
+
+    for neuron_idx in range(num_neurons):
+        # Test rápido
+        _, history = vis.generate_feature(
+            neuron_idx=neuron_idx,
+            iterations=test_iterations,
+            lr=0.1,
+            verbose=False
+        )
+
+        # Guardar activación promedio
+        avg_activation = np.mean(history['activation'][-10:])
+        results.append((neuron_idx, avg_activation))
+
+        # Progress
+        if (neuron_idx + 1) % 10 == 0:
+            print(f"   Progreso: {neuron_idx + 1}/{num_neurons}")
+
+    # Ordenar por activación
+    results.sort(key=lambda x: x[1], reverse=True)
+
+    # Solo hacer cleanup si creamos uno nuevo
+    if cleanup_after:
+        vis.cleanup()
+
+    return results[:top_k]
