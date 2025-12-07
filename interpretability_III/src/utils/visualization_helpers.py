@@ -511,3 +511,260 @@ def find_active_neurons(model, target_layer, device, top_k=10, test_iterations=5
         vis.cleanup()
 
     return results[:top_k]
+
+
+def extract_max_activation_region(model, target_layer, neuron_idx, image_path, device):
+    """
+    Extrae región de máxima activación de una imagen real
+
+    Args:
+        model: Modelo PyTorch
+        target_layer: Nombre de la capa objetivo
+        neuron_idx: Índice de la neurona
+        image_path: Path a la imagen
+        device: Device (cpu/cuda)
+
+    Returns:
+        dict con: center_x, center_y, max_value, activation_map, 
+                  real_image, patch_size, map_shape
+    """
+    import torch
+    import torchvision.transforms as transforms
+    from PIL import Image
+    import numpy as np
+
+    # Cargar y preprocesar imagen
+    img = Image.open(image_path).convert('RGB')
+    img_resized = img.resize((224, 224))
+
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
+
+    img_tensor = transform(img_resized).unsqueeze(0).to(device)
+
+    # Registrar hook para capturar activaciones
+    activations = {}
+
+    def hook_fn(module, input, output):
+        activations['target'] = output.detach()
+
+    # Encontrar capa y registrar hook
+    target_module = dict(model.named_modules())[target_layer]
+    hook = target_module.register_forward_hook(hook_fn)
+
+    # Forward pass
+    model.eval()
+    with torch.no_grad():
+        _ = model(img_tensor)
+
+    # Remover hook
+    hook.remove()
+
+    # Extraer mapa de activación
+    activation_map = activations['target'][0, neuron_idx].cpu().numpy()
+
+    # Encontrar posición de máxima activación
+    max_y, max_x = np.unravel_index(
+        activation_map.argmax(), activation_map.shape)
+    max_value = activation_map[max_y, max_x]
+
+    # Escalar a coordenadas de imagen 224x224
+    scale_h = 224 / activation_map.shape[0]
+    scale_w = 224 / activation_map.shape[1]
+
+    center_x = int(max_x * scale_w)
+    center_y = int(max_y * scale_h)
+
+    # Calcular tamaño de parche (receptive field aproximado)
+    # Regla simple: más profunda la capa, mayor el receptive field
+    layer_depth = int(target_layer.split(
+        '.')[-1]) if 'features' in target_layer else 0
+    patch_size = 32 + (layer_depth * 16)  # 32, 48, 64, 80, 96...
+    patch_size = min(patch_size, 96)  # Limitar a 96
+
+    return {
+        'center_x': center_x,
+        'center_y': center_y,
+        'max_value': max_value,
+        'activation_map': activation_map,
+        'real_image': np.array(img_resized),
+        'patch_size': patch_size,
+        'map_shape': activation_map.shape
+    }
+
+
+def plot_activation_heatmap_with_roi(real_image, activation_map, center_x, center_y,
+                                     patch_size, neuron_idx, layer_name):
+    """
+    Visualiza heatmap con ROI marcado
+
+    Args:
+        real_image: Array numpy [H, W, 3]
+        activation_map: Array numpy [H_map, W_map]
+        center_x, center_y: Coordenadas del centro
+        patch_size: Tamaño del parche
+        neuron_idx: Índice de neurona
+        layer_name: Nombre de la capa
+    """
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from scipy.ndimage import zoom
+
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+
+    # Imagen original con ROI
+    axes[0].imshow(real_image)
+
+    # Calcular límites del ROI
+    x1 = max(0, center_x - patch_size // 2)
+    y1 = max(0, center_y - patch_size // 2)
+    x2 = min(224, center_x + patch_size // 2)
+    y2 = min(224, center_y + patch_size // 2)
+
+    # Dibujar ROI
+    rect = plt.Rectangle((x1, y1), x2-x1, y2-y1,
+                         fill=False, edgecolor='red', linewidth=3)
+    axes[0].add_patch(rect)
+    axes[0].plot(center_x, center_y, 'r*', markersize=20,
+                 markeredgecolor='white', markeredgewidth=2)
+    axes[0].set_title(
+        f'Imagen Real\nROI en ({center_x}, {center_y})', fontsize=12, fontweight='bold')
+    axes[0].axis('off')
+
+    # Heatmap superpuesto
+    # Redimensionar activation_map a 224x224
+    zoom_factors = (
+        224 / activation_map.shape[0], 224 / activation_map.shape[1])
+    heatmap_resized = zoom(activation_map, zoom_factors, order=1)
+
+    axes[1].imshow(real_image)
+    im = axes[1].imshow(heatmap_resized, cmap='jet',
+                        alpha=0.5, vmin=0, vmax=heatmap_resized.max())
+    axes[1].plot(center_x, center_y, 'w*', markersize=20,
+                 markeredgecolor='black', markeredgewidth=2)
+
+    # Colorbar
+    cbar = plt.colorbar(im, ax=axes[1], fraction=0.046, pad=0.04)
+    cbar.set_label('Activación', fontsize=10)
+
+    axes[1].set_title(
+        f'Heatmap de Activación\nNeurona {neuron_idx}', fontsize=12, fontweight='bold')
+    axes[1].axis('off')
+
+    plt.suptitle(f'Localización de Activación Máxima - {layer_name}',
+                 fontsize=14, fontweight='bold', y=0.98)
+    plt.tight_layout()
+    plt.show()
+
+
+def overlay_synthetic_on_activation(real_image, synthetic_image, center_x, center_y, patch_size):
+    """
+    Superpone feature sintética en región activa
+
+    Args:
+        real_image: Array numpy [H, W, 3] (224x224)
+        synthetic_image: Array numpy [H, W, 3] (224x224)
+        center_x, center_y: Coordenadas del centro
+        patch_size: Tamaño del parche
+
+    Returns:
+        dict con: real_full, real_patch, synthetic_resized, blend
+    """
+    import numpy as np
+    from PIL import Image
+
+    # Calcular límites
+    x1 = max(0, center_x - patch_size // 2)
+    y1 = max(0, center_y - patch_size // 2)
+    x2 = min(224, center_x + patch_size // 2)
+    y2 = min(224, center_y + patch_size // 2)
+
+    # Ajustar si está en borde
+    actual_w = x2 - x1
+    actual_h = y2 - y1
+
+    # Extraer parche de imagen real
+    real_patch = real_image[y1:y2, x1:x2]
+
+    # Redimensionar sintética al tamaño del parche
+    synthetic_pil = Image.fromarray(synthetic_image)
+    synthetic_resized = np.array(synthetic_pil.resize((actual_w, actual_h)))
+
+    # Crear blend (50/50)
+    blend = (real_patch.astype(float) * 0.5 +
+             synthetic_resized.astype(float) * 0.5).astype(np.uint8)
+
+    return {
+        'real_full': real_image,
+        'real_patch': real_patch,
+        'synthetic_resized': synthetic_resized,
+        'blend': blend,
+        'roi': (x1, y1, x2, y2)
+    }
+
+
+def plot_overlay_comparison(real_full, real_patch, synthetic_resized, blend,
+                            center_x, center_y, patch_size, neuron_idx, layer_name):
+    """
+    Visualiza comparación con superposición
+
+    Args:
+        real_full: Imagen completa [H, W, 3]
+        real_patch: Parche real [h, w, 3]
+        synthetic_resized: Sintética redimensionada [h, w, 3]
+        blend: Mezcla 50/50 [h, w, 3]
+        center_x, center_y: Coordenadas del centro
+        patch_size: Tamaño del parche
+        neuron_idx: Índice de neurona
+        layer_name: Nombre de la capa
+    """
+    import matplotlib.pyplot as plt
+
+    fig, axes = plt.subplots(1, 4, figsize=(20, 5))
+
+    # Calcular límites para el rectángulo
+    x1 = max(0, center_x - patch_size // 2)
+    y1 = max(0, center_y - patch_size // 2)
+    x2 = min(224, center_x + patch_size // 2)
+    y2 = min(224, center_y + patch_size // 2)
+
+    # 1. Imagen completa con ROI
+    axes[0].imshow(real_full)
+    rect = plt.Rectangle((x1, y1), x2-x1, y2-y1,
+                         fill=False, edgecolor='red', linewidth=3)
+    axes[0].add_patch(rect)
+    axes[0].plot(center_x, center_y, 'r*', markersize=20,
+                 markeredgecolor='white', markeredgewidth=2)
+    axes[0].set_title(f'Imagen Real Completa\nROI: {x2-x1}x{y2-y1}',
+                      fontsize=11, fontweight='bold')
+    axes[0].axis('off')
+
+    # 2. Parche real
+    axes[1].imshow(real_patch)
+    axes[1].set_title('Región Real\n(Zona de máxima activación)',
+                      fontsize=11, fontweight='bold')
+    axes[1].axis('off')
+
+    # 3. Feature sintética redimensionada
+    axes[2].imshow(synthetic_resized)
+    axes[2].set_title('Patrón Ideal (Sintética)\n(Redimensionada)',
+                      fontsize=11, fontweight='bold')
+    axes[2].axis('off')
+
+    # 4. Blend
+    axes[3].imshow(blend)
+    axes[3].set_title('Superposición 50/50\n(Coincidencias visuales)',
+                      fontsize=11, fontweight='bold')
+    axes[3].axis('off')
+
+    plt.suptitle(f'Comparación: Real vs Ideal - Neurona {neuron_idx} ({layer_name})',
+                 fontsize=14, fontweight='bold', y=1.02)
+    plt.tight_layout()
+    plt.show()
+
+    print(f"\n📐 Dimensiones:")
+    print(f"   Parche real: {real_patch.shape}")
+    print(f"   Sintética redimensionada: {synthetic_resized.shape}")
+    print(f"   Centro: ({center_x}, {center_y})")
