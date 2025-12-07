@@ -1,0 +1,265 @@
+{
+  "model": "AlexNet",
+  "layer": "features.0",
+  "total_neurons": 64,
+  "timestamp": "2025-12-07T14:09:58.523124",
+  "test_iterations": 50,
+  "neurons": [
+    {
+      "neuron_idx": 37,
+      "activation": 53.661634826660155
+    },
+    {
+      "neuron_idx": 21,
+      "activation": 45.670033645629886
+    },
+    {
+      "neuron_idx": 20,
+      "activation": 36.77879600524902
+    },
+    {
+      "neuron_idx": 2,
+      "activation": 26.883372497558593
+    },
+    {
+      "neuron_idx": 4,
+      "activation": 25.186179161071777
+    },
+    {
+      "neuron_idx": 42,
+      "activation": 23.826502799987793
+    },
+    {
+      "neuron_idx": 40,
+      "activation": 23.382930564880372
+    },
+    {
+      "neuron_idx": 44,
+      "activation": 22.195421028137208
+    },
+    {
+      "neuron_idx": 59,
+      "activation": 20.438172912597658
+    },
+    {
+      "neuron_idx": 38,
+      "activation": 20.36211414337158
+    },
+    {
+      "neuron_idx": 35,
+      "activation": 19.71303520202637
+    },
+    {
+      "neuron_idx": 49,
+      "activation": 19.577024078369142
+    },
+    {
+      "neuron_idx": 56,
+      "activation": 18.083095359802247
+    },
+    {
+      "neuron_idx": 52,
+      "activation": 11.89460506439209
+    },
+    {
+      "neuron_idx": 62,
+      "activation": 10.878149890899659
+    },
+    {
+      "neuron_idx": 50,
+      "activation": 9.441586685180663
+    },
+    {
+      "neuron_idx": 17,
+      "activation": 9.31363821029663
+    },
+    {
+      "neuron_idx": 5,
+      "activation": 8.480564308166503
+    },
+    {
+      "neuron_idx": 47,
+      "activation": 8.431790447235107
+    },
+    {
+      "neuron_idx": 6,
+      "activation": 8.31892638206482
+    },
+    {
+      "neuron_idx": 11,
+      "activation": 7.916152143478394
+    },
+    {
+      "neuron_idx": 43,
+      "activation": 6.653775262832641
+    },
+    {
+      "neuron_idx": 29,
+      "activation": 6.2661778926849365
+    },
+    {
+      "neuron_idx": 23,
+      "activation": 5.945191335678101
+    },
+    {
+      "neuron_idx": 57,
+      "activation": 5.933613586425781
+    },
+    {
+      "neuron_idx": 32,
+      "activation": 5.7777385234832765
+    },
+    {
+      "neuron_idx": 14,
+      "activation": 5.376158571243286
+    },
+    {
+      "neuron_idx": 53,
+      "activation": 4.335416007041931
+    },
+    {
+      "neuron_idx": 10,
+      "activation": 4.278922700881958
+    },
+    {
+      "neuron_idx": 12,
+      "activation": 4.037390041351318
+    },
+    {
+      "neuron_idx": 55,
+      "activation": 4.014207601547241
+    },
+    {
+      "neuron_idx": 16,
+      "activation": 3.196596097946167
+    },
+    {
+      "neuron_idx": 61,
+      "activation": 3.178699421882629
+    },
+    {
+      "neuron_idx": 13,
+      "activation": 2.9533000230789184
+    },
+    {
+      "neuron_idx": 41,
+      "activation": 2.901359522342682
+    },
+    {
+      "neuron_idx": 30,
+      "activation": 2.268677806854248
+    },
+    {
+      "neuron_idx": 48,
+      "activation": 2.177438569068909
+    },
+    {
+      "neuron_idx": 18,
+      "activation": 2.1633378624916078
+    },
+    {
+      "neuron_idx": 28,
+      "activation": 1.978491759300232
+    },
+    {
+      "neuron_idx": 34,
+      "activation": 1.9435053586959838
+    },
+    {
+      "neuron_idx": 8,
+      "activation": 1.8716364860534669
+    },
+    {
+      "neuron_idx": 22,
+      "activation": 1.7912685751914978
+    },
+    {
+      "neuron_idx": 33,
+      "activation": 1.4400292217731476
+    },
+    {
+      "neuron_idx": 3,
+      "activation": 1.4130832731723786
+    },
+    {
+      "neuron_idx": 63,
+      "activation": 1.3936108231544495
+    },
+    {
+      "neuron_idx": 24,
+      "activation": 1.2797912418842317
+    },
+    {
+      "neuron_idx": 27,
+      "activation": 0.6858081221580505
+    },
+    {
+      "neuron_idx": 54,
+      "activation": 0.5748754858970642
+    },
+    {
+      "neuron_idx": 25,
+      "activation": 0.5110353611409664
+    },
+    {
+      "neuron_idx": 60,
+      "activation": 0.4791374921798706
+    },
+    {
+      "neuron_idx": 9,
+      "activation": 0.3562193177640438
+    },
+    {
+      "neuron_idx": 0,
+      "activation": 0.0
+    },
+    {
+      "neuron_idx": 1,
+      "activation": 0.0
+    },
+    {
+      "neuron_idx": 7,
+      "activation": 0.0
+    },
+    {
+      "neuron_idx": 15,
+      "activation": 0.0
+    },
+    {
+      "neuron_idx": 19,
+      "activation": 0.0
+    },
+    {
+      "neuron_idx": 26,
+      "activation": 0.0
+    },
+    {
+      "neuron_idx": 31,
+      "activation": 0.0
+    },
+    {
+      "neuron_idx": 36,
+      "activation": 0.0
+    },
+    {
+      "neuron_idx": 39,
+      "activation": 0.0
+    },
+    {
+      "neuron_idx": 45,
+      "activation": 0.0
+    },
+    {
+      "neuron_idx": 46,
+      "activation": 0.0
+    },
+    {
+      "neuron_idx": 51,
+      "activation": 0.0
+    },
+    {
+      "neuron_idx": 58,
+      "activation": 0.0
+    }
+  ]
+}
