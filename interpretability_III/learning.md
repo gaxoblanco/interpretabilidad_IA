@@ -1,4 +1,10 @@
 
+## Interpretability III: 03 feature visualization
+- Los filtros mas interesante resultan muy complejos para indentificarlo correctamente en el mapa de calor. 
+- Al trabajar con una capa temprana, esto es mas sencillo, ya que los filtros son mas simples y se pueden identificar patrones mas fácilmente. como los contornos del "gato" en la imagen.
+- Posicionar el filtro sobre la imagen y observar las activaciones resultantes en el mapa de calor. Explican mucho el tamano y la posición del filtro en la imagen original.
+
+## Interpretability III: Aprendizaje y Congelación de Parámetros
 ## Parámetros entrenables
 - param.requires_grad = True
 - Los gradientes se calculan para estos parámetros
