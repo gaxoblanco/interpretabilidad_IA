@@ -78,9 +78,10 @@ Este módulo se enfoca en **interpretabilidad a nivel de arquitectura interna**,
 
 interpretability_III/
 ├── notebooks/
+│   ├── 00_individual_image_analysis     # Análisis de imagen individual
 │   ├── 01_model_loading.ipynb           # Cargar ResNet pre-entrenado
-│   ├── 02_activation_analysis.ipynb      # Analizar activaciones por capa
-│   ├── 03_feature_visualization.ipynb    # Generar imágenes que activan neuronas
+│   ├── 02_activation_analysis.ipynb     # Analizar activaciones por capa
+│   ├── 03_feature_visualization.ipynb   # Generar imágenes que activan neuronas
 │   ├── 04_neuron_probing.ipynb          # Clasificadores de sondeo
 │   └── 05_case_studies.ipynb            # Casos de estudio interesantes
 │
@@ -101,6 +102,8 @@ interpretability_III/
 │   │
 │   └── utils/
 │       ├── image_loader.py              # Cargar y procesar imágenes
+│       ├── analyze_neuron.py
+│       ├── neuron_activation.py
 │       └── hooks.py                     # PyTorch hooks para capas
 │
 ├── app.py                               # Dashboard Streamlit interactivo

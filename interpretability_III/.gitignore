@@ -11,7 +11,7 @@ venv_III/
 ENV/
 env.bak/
 venv_III.bak/
-*.venv_III
+.venv_feature_viz
 
 # ============================================
 # PYTHON
