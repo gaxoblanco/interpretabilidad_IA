@@ -167,6 +167,7 @@ Esta herramienta te permite:
 - 🔥 Visualizar mapas de activación de neuronas específicas
 - 🎨 Generar patrones sintéticos que maximizan activaciones
 - 🔬 Comparar regiones reales vs patrones ideales
+- En capas profundas se vuelve un poco complejo interpretar el filtro sobre la imgen, ¡pero es fascinante!
 
 **¡Comienza subiendo una imagen o usando una de muestra!**
 """

@@ -25,7 +25,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 from typing import Dict, List, Tuple, Optional
-from scipy.ndimage import zoom
+from scipy.ndimage import zoom, center_of_mass
 from skimage.transform import resize
 
 # Importar configuración
@@ -367,6 +367,10 @@ class NeuronAnalyzer:
         """
         Encuentra la región de máxima activación en el mapa.
 
+        Usa el método 'weighted_area' que encuentra el centro de masa
+        de la región con alta activación (más robusto que buscar un
+        solo píxel máximo).
+
         Args:
             activation_map: Array [H, W] con mapa de activación
             roi_size: Tamaño del ROI (height, width)
@@ -374,11 +378,22 @@ class NeuronAnalyzer:
         Returns:
             Tupla (y, x) con coordenadas del centro del ROI
         """
-        # Encontrar posición de máximo
-        max_idx = activation_map.argmax()
-        max_y, max_x = np.unravel_index(max_idx, activation_map.shape)
+        # Umbral: considerar píxeles con activación > 80% del máximo
+        threshold = activation_map.max() * 0.8
+        hot_mask = activation_map >= threshold
 
-        return (max_y, max_x)
+        # Seguridad: si no hay píxeles calientes, usar máximo simple
+        if hot_mask.sum() == 0:
+            max_idx = activation_map.argmax()
+            max_y, max_x = np.unravel_index(max_idx, activation_map.shape)
+            return (max_y, max_x)
+
+        # Calcular centro de masa de la región caliente
+        # Esto pondera cada píxel por su valor de activación
+        cy, cx = center_of_mass(activation_map * hot_mask)
+
+        # Redondear a coordenadas enteras
+        return (int(round(cy)), int(round(cx)))
 
     def extract_roi(
         self,

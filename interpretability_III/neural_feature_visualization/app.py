@@ -329,7 +329,7 @@ def generate_comparison(neuron_idx: int):
         )
 
         # Guardar ROI específico de esta neurona
-        st.session_state.roi_center_neuron = roi_center_scaled
+        st.session_state.roi_center = roi_center_scaled
 
         # 2. Extraer ROI real usando el centro específico de esta neurona
         roi_real = analyzer.extract_roi(
@@ -382,7 +382,7 @@ def generate_comparison(neuron_idx: int):
         st.session_state.real_activation = real_activation
         st.session_state.synthetic_activation = synthetic_activation
         st.session_state.selected_neuron_for_comparison = neuron_idx
-        st.session_state.roi_center_used = roi_center_scaled
+        st.session_state.roi_center = roi_center_scaled
         st.session_state.comparison_generated = True
 
         return True
@@ -803,9 +803,47 @@ def section_comparison():
             st.metric("Mejora", f"{improvement:.2f}x")
 
 
+def inject_custom_css():
+    """
+    Inyecta CSS personalizado para eliminar el scroll del contenido principal.
+
+    Comportamiento:
+    - El contenido principal NO tiene scroll (overflow hidden)
+    - El sidebar mantiene su scroll natural
+    - La altura del main se fija al 100% del viewport
+    """
+    st.markdown("""
+        <style>
+        /* Eliminar scroll del contenido principal */
+        .main .block-container {
+            overflow-y: hidden !important;
+            max-height: 100vh !important;
+            padding-top: 2rem !important;
+            padding-bottom: 2rem !important;
+        }
+        
+        /* Asegurar que el main ocupe todo el viewport sin scroll */
+        section[data-testid="stMain"] {
+            overflow-y: hidden !important;
+            height: 100vh !important;
+        }
+        
+        /* El sidebar mantiene su scroll natural */
+        section[data-testid="stSidebar"] {
+            overflow-y: auto !important;
+        }
+        
+        /* Ajustar padding para mejor visualización */
+        .main {
+            padding: 0 !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
 # ===================================================================
 # SIDEBAR
 # ===================================================================
+
 
 def render_sidebar():
     """Renderiza el sidebar."""
@@ -872,6 +910,9 @@ def main():
 
     # Inicializar
     init_session_state()
+
+    # Inyectar estilos CSS personalizados (eliminar scroll principal)
+    # inject_custom_css()
 
     # Sidebar
     render_sidebar()
