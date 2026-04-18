@@ -1,3 +1,5 @@
+python -m notebook
+
 # Interpretabilidad en Machine Learning
 
 Programa de estudio progresivo enfocado en técnicas de interpretabilidad para modelos de ML. Cada módulo implementa métodos específicos sobre diferentes tipos de datos, documentando decisiones técnicas y resultados experimentales.
