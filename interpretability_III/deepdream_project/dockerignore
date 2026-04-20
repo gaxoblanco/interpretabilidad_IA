@@ -1,0 +1,44 @@
+# ================================================================
+# .DOCKERIGNORE — Archivos excluidos del contexto de Docker build
+# ================================================================
+#
+# SIN este archivo, Docker copia TODO al contexto de build,
+# incluyendo el venv (~200MB+), __pycache__, .git, etc.
+# Esto hace el build lento y la imagen más pesada.
+#
+# Regla: excluir todo lo que no sea código fuente o assets.
+# ================================================================
+
+# Entorno virtual de Python — nunca va al contenedor
+venv/
+.venv/
+env/
+
+# Caché de Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Control de versiones
+.git/
+.gitignore
+
+# Archivos de desarrollo local
+*.md
+!README.md
+.env
+.env.*
+
+# Docker mismo
+Dockerfile
+.dockerignore
+
+# Jupyter y editores
+.ipynb_checkpoints/
+*.ipynb
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

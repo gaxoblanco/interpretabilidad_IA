@@ -1,0 +1,35 @@
+# ================================================================
+# REQUIREMENTS.TXT — Dependencias pinneadas para HF Spaces
+# ================================================================
+#
+# PRINCIPIOS DE ESTE ARCHIVO:
+#   - Versiones pinneadas (==) para reproducibilidad exacta
+#   - Sin CUDA: torch+cpu para HF Spaces gratuito
+#   - torch y torchvision deben ser compatibles entre sí
+#
+# INSTALACIÓN LOCAL:
+#   pip install -r requirements.txt
+#
+# NOTAS DE COMPATIBILIDAD:
+#   torch 2.0.1 + torchvision 0.15.2 → versiones probadas que
+#   funcionan juntas. Cambiar una sin la otra causa errores de
+#   compatibilidad de CUDA/operaciones.
+#
+# ================================================================
+
+# Framework de Deep Learning (CPU-only para HF Spaces gratuito)
+# La variante +cpu evita descargar los ~2GB de binarios CUDA
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.6.0+cpu
+torchvision==0.21.0+cpu
+
+# UI — Dashboard web
+streamlit==1.35.0
+
+# Procesamiento de imágenes
+Pillow==10.3.0
+
+# Computación numérica (requerida por torch y PIL internamente)
+numpy==1.26.4
+
+requests==2.31.0
