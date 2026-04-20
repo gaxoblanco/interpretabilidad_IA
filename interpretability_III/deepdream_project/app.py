@@ -62,6 +62,22 @@ st.set_page_config(
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+st.markdown("""
+<style>
+    /* Eliminar scroll interno de columnas y contenedores */
+    [data-testid="stHorizontalBlock"] {
+        overflow: visible !important;
+    }
+    [data-testid="column"] {
+        overflow: visible !important;
+    }
+    /* Un solo scroll principal */
+    .main .block-container {
+        overflow: visible !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 
 # ================================================================
 # CACHÉ DE MODELOS
@@ -353,7 +369,7 @@ def modo_completo(imagen_pil: Image.Image, modelo, config: dict):
 
     with col_orig:
         st.markdown("**Original**")
-        st.image(imagen_pil, use_column_width=True)
+        mostrar_imagen_proporcional(imagen_pil, max_width=600)
 
     with col_dream:
         st.markdown("**DeepDream**")
@@ -390,8 +406,10 @@ def modo_completo(imagen_pil: Image.Image, modelo, config: dict):
 
     barra_progreso.empty()
     texto_estado.empty()
-    placeholder_progreso.image(
-        resultado, caption="Resultado final ✓", use_column_width=True)
+
+    with col_dream:
+        mostrar_imagen_proporcional(
+            resultado, caption="Resultado final ✓", max_width=600)
 
     st.session_state["ultimo_resultado"] = resultado
     st.session_state["ultimo_original"] = imagen_pil
@@ -464,10 +482,10 @@ def mostrar_comparacion(original: Image.Image, resultado: Image.Image, capa: str
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("**Original**")
-        st.image(original, use_column_width=True)
+        mostrar_imagen_proporcional(original, max_width=600)
     with col2:
         st.markdown(f"**DeepDream** — capa `{capa}`")
-        st.image(resultado, use_column_width=True)
+        mostrar_imagen_proporcional(resultado, max_width=600)
 
 
 def _mostrar_boton_descarga(imagen_pil, nombre_archivo="deepdream.png",
@@ -495,9 +513,22 @@ def _crear_imagen_ejemplo() -> Image.Image:
     return Image.fromarray(arr)
 
 
+def mostrar_imagen_proporcional(img: Image.Image, caption: str = "", max_width: int = 700):
+    """
+    Muestra imagen respetando su aspect ratio original.
+    Calcula el ancho óptimo sin deformar.
+    """
+    w, h = img.size
+    ratio = h / w
+    ancho = min(w, max_width)
+    alto = int(ancho * ratio)
+    img_resized = img.resize((ancho, alto), Image.LANCZOS)
+    st.image(img_resized, caption=caption, width=ancho)
+
 # ================================================================
 # MAIN
 # ================================================================
+
 
 def main():
     init_session_state()

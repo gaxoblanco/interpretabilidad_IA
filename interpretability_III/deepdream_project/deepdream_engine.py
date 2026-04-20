@@ -153,14 +153,23 @@ def preprocesar_imagen(pil_img: Image.Image, tamanio: tuple) -> torch.Tensor:
 
     Aplica correccion EXIF para fotos de iPhone/Android.
     """
-    pil_img = ImageOps.exif_transpose(pil_img)  # fix rotacion de camara
+    pil_img = ImageOps.exif_transpose(pil_img)
     pil_img = pil_img.convert("RGB")
-    pil_img = pil_img.resize(tamanio, Image.LANCZOS)
 
-    transform = transforms.Compose([
-        transforms.ToTensor(),  # [0,255] -> [0,1], sin normalizacion
-    ])
-    return transform(pil_img).unsqueeze(0)  # [1, 3, H, W]
+    # Respetar proporción original — solo limitar el lado más largo
+    max_lado = max(tamanio)
+    w, h = pil_img.size
+    if w >= h:
+        nuevo_w = max_lado
+        nuevo_h = int(h * max_lado / w)
+    else:
+        nuevo_h = max_lado
+        nuevo_w = int(w * max_lado / h)
+
+    pil_img = pil_img.resize((nuevo_w, nuevo_h), Image.LANCZOS)
+
+    transform = transforms.Compose([transforms.ToTensor()])
+    return transform(pil_img).unsqueeze(0)
 
 
 def numpy_a_pil(img_numpy: np.ndarray) -> Image.Image:
